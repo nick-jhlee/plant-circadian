@@ -54,17 +54,66 @@ def light(t):
 
 def odes(t, vars, params):
     """
-    Fulll version of the ODEs!
+    Full version of the ODEs!
 
     :param vars: 14 variables!!
+    0  1    2    3  4  5     6     7   8   9     10    11    12    13
+    T, Z_d, Z_l, G, P, TZ_d, TZ_l, TG, TP, Z_dG, Z_dP, Z_lG, Z_lP, GP
+
     :param params: 30 parameters!!
-    :return: gradient flows at time t
+    0    1    2    3    4    5     6     7    8
+    t_T, t_Z, t_G, t_P, d_T, d_Zd, d_Zl, d_G, d_P,
+    9      10     11    12    13     14     15     16     17
+    d_TZd, d_TZl, d_TG, d_TP, d_ZdG, d_ZdP, d_ZlG, d_ZlP, d_GP
+    18   19   20
+    k_f, k_l, k_d
+    21     22     23    24    25     26     27     28     29
+    k_TZd, k_TZl, k_TG, k_TP, k_ZdG, k_ZdP, k_ZlG, k_ZlP, k_GP
+
+    :return: gradient flows at time t, in order of vars
     """
     assert len(vars) == 14
     assert len(params) == 30
 
     # gradient flows
-    return torch.tensor([mTOC1(t), 1, mGI(t), mPRR3(t)]) - (params * vars)
+    output = torch.zeros(14)
+
+    output[0] = params[0]*mTOC1(t) - params[18]*(vars[0]*vars[1] + vars[0]*vars[2] + vars[0]*vars[3] + vars[0]*vars[4]) + \
+                params[21]*vars[5] + params[22]*vars[6] + params[23]*vars[7] + params[24]*vars[8] - params[4]*vars[0]
+
+    output[1] = params[1] - params[18]*(vars[1]*vars[0] + vars[1]*vars[3] + vars[1]*vars[4]) + \
+                params[9]*vars[5] + params[25]*vars[9] + params[26]*vars[10] - params[5]*vars[1] - \
+                params[19]*light(t)*vars[1] + params[20]*(1-light(t))*vars[2]
+
+    output[2] = params[19]*light(t)*vars[1] - params[20]*(1-light(t))*vars[2] - \
+                params[18]*(vars[2]*vars[0] + vars[2]*vars[3] + vars[2]*vars[4]) + \
+                params[10]*vars[6] + params[27]*vars[11] + params[16]*vars[12] - params[6]*vars[2]
+
+    output[3] = params[2]*mGI(t) - params[18]*(vars[3]*vars[0] + vars[3]*vars[1] + vars[3]*vars[2] + vars[3]*vars[4]) + \
+                params[23]*vars[7] + params[25]*vars[9] + params[27]*vars[11] + params[29]*vars[13] - params[7]*vars[3]
+
+    output[4] = params[3]*mPRR3(t) - params[18]*(vars[4]*vars[0] + vars[4]*vars[1] + vars[4]*vars[2] + vars[4]*vars[3]) + \
+                params[24]*vars[8] + params[26]*vars[10] + params[28]*vars[12] + params[29]*vars[13] - params[8]*vars[4]
+
+    output[5] = params[18]*vars[0]*vars[1] - params[21]*vars[5] - params[9]*vars[5]
+
+    output[6] = params[18]*vars[0]*vars[2] - params[22]*vars[6] - params[10]*vars[6]
+
+    output[7] = params[18]*vars[0]*vars[3] - params[23]*vars[7] - params[11]*vars[7]
+
+    output[8] = params[18]*vars[0]*vars[4] - params[24]*vars[8] - params[12]*vars[8]
+
+    output[9] = params[18]*vars[1]*vars[3] - params[25]*vars[9] - params[13]*vars[9]
+
+    output[10] = params[18]*vars[1]*vars[4] - params[26]*vars[10] - params[14]*vars[10]
+
+    output[11] = params[18]*vars[2]*vars[3] - params[27]*vars[11] - params[15]*vars[11]
+
+    output[12] = params[18]*vars[2]*vars[4] - params[28]*vars[12] - params[16]*vars[12]
+
+    output[13] = params[18]*vars[3]*vars[4] - params[29]*vars[13] - params[17]*vars[13]
+
+    return output
 
 
 def Euler_odes(params, step_size=0.01):
@@ -73,7 +122,7 @@ def Euler_odes(params, step_size=0.01):
     # COMPUTE initial condition (torch tensor)
     # order of proteins: T, Z, G, P
     # with torch.no_grad():
-    proteins_init = torch.zeros(4)
+    proteins_init = torch.zeros(14)
     t = torch.tensor(0.0)
     while t <= 24 * 10:
         # take the step
@@ -101,8 +150,8 @@ def Euler_odes(params, step_size=0.01):
             Z_output[i] = proteins[1]
             i += 1
         if t in GP_stamp:
-            G_output[j] = proteins[2]
-            P_output[j] = proteins[3]
+            G_output[j] = proteins[3]
+            P_output[j] = proteins[4]
             j += 1
 
         # take the step

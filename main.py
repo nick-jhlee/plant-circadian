@@ -4,7 +4,7 @@
 import numpy as np
 import torch
 import torch.optim as optim
-import model_simple
+import model
 from datetime import datetime
 
 # Set device (preferably GPU)
@@ -15,8 +15,8 @@ verbose = True
 
 # Initialize parameters randomly
 # TODO: Is this init scheme valid...?
-# tmp = abs(torch.randn(4))
-tmp = torch.ones(4)
+# tmp = abs(torch.randn(30))
+tmp = torch.ones(30)
 params = torch.tensor(tmp, requires_grad=True)
 print("INITIAL params: ", params)
 
@@ -33,7 +33,7 @@ lbfgs = False
 
 def closure():
     optimizer.zero_grad()
-    output = model_simple.loss(params)
+    output = model.loss(params)
     output.backward()
     return output
 
@@ -55,7 +55,7 @@ while True:
     else:
         optimizer.zero_grad()
 
-        output = model_simple.loss(params)
+        output = model.loss(params)
 
         curr_loss = output.item()
         if verbose and iter % 1 == 0:
