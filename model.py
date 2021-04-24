@@ -78,40 +78,46 @@ def odes(t, vars, params):
     # gradient flows
     output = torch.zeros(14)
 
-    output[0] = params[0]*mTOC1(t) - params[18]*(vars[0]*vars[1] + vars[0]*vars[2] + vars[0]*vars[3] + vars[0]*vars[4]) + \
-                params[21]*vars[5] + params[22]*vars[6] + params[23]*vars[7] + params[24]*vars[8] - params[4]*vars[0]
+    output[0] = params[0] * mTOC1(t) - params[18] * (
+                vars[0] * vars[1] + vars[0] * vars[2] + vars[0] * vars[3] + vars[0] * vars[4]) + \
+                params[21] * vars[5] + params[22] * vars[6] + params[23] * vars[7] + params[24] * vars[8] - params[4] * \
+                vars[0]
 
-    output[1] = params[1] - params[18]*(vars[1]*vars[0] + vars[1]*vars[3] + vars[1]*vars[4]) + \
-                params[9]*vars[5] + params[25]*vars[9] + params[26]*vars[10] - params[5]*vars[1] - \
-                params[19]*light(t)*vars[1] + params[20]*(1-light(t))*vars[2]
+    output[1] = params[1] - params[18] * (vars[1] * vars[0] + vars[1] * vars[3] + vars[1] * vars[4]) + \
+                params[9] * vars[5] + params[25] * vars[9] + params[26] * vars[10] - params[5] * vars[1] - \
+                params[19] * light(t) * vars[1] + params[20] * (1 - light(t)) * vars[2]
 
-    output[2] = params[19]*light(t)*vars[1] - params[20]*(1-light(t))*vars[2] - \
-                params[18]*(vars[2]*vars[0] + vars[2]*vars[3] + vars[2]*vars[4]) + \
-                params[10]*vars[6] + params[27]*vars[11] + params[16]*vars[12] - params[6]*vars[2]
+    output[2] = params[19] * light(t) * vars[1] - params[20] * (1 - light(t)) * vars[2] - \
+                params[18] * (vars[2] * vars[0] + vars[2] * vars[3] + vars[2] * vars[4]) + \
+                params[10] * vars[6] + params[27] * vars[11] + params[16] * vars[12] - params[6] * vars[2]
 
-    output[3] = params[2]*mGI(t) - params[18]*(vars[3]*vars[0] + vars[3]*vars[1] + vars[3]*vars[2] + vars[3]*vars[4]) + \
-                params[23]*vars[7] + params[25]*vars[9] + params[27]*vars[11] + params[29]*vars[13] - params[7]*vars[3]
+    output[3] = params[2] * mGI(t) - params[18] * (
+                vars[3] * vars[0] + vars[3] * vars[1] + vars[3] * vars[2] + vars[3] * vars[4]) + \
+                params[23] * vars[7] + params[25] * vars[9] + params[27] * vars[11] + params[29] * vars[13] - params[
+                    7] * vars[3]
 
-    output[4] = params[3]*mPRR3(t) - params[18]*(vars[4]*vars[0] + vars[4]*vars[1] + vars[4]*vars[2] + vars[4]*vars[3]) + \
-                params[24]*vars[8] + params[26]*vars[10] + params[28]*vars[12] + params[29]*vars[13] - params[8]*vars[4]
+    output[4] = params[3] * mPRR3(t) - params[18] * (
+                vars[4] * vars[0] + vars[4] * vars[1] + vars[4] * vars[2] + vars[4] * vars[3]) + \
+                params[24] * vars[8] + params[26] * vars[10] + params[28] * vars[12] + params[29] * vars[13] - params[
+                    8] * vars[4]
 
-    output[5] = params[18]*vars[0]*vars[1] - params[21]*vars[5] - params[9]*vars[5]
+    output[5] = params[18] * vars[0] * vars[1] - params[21] * vars[5] - params[9] * vars[5]
 
-    output[6] = params[18]*vars[0]*vars[2] - params[22]*vars[6] - params[10]*vars[6]
+    output[6] = params[18] * vars[0] * vars[2] - params[22] * vars[6] - params[10] * vars[6]
 
-    output[7] = params[18]*vars[0]*vars[3] - params[23]*vars[7] - params[11]*vars[7]
+    output[7] = params[18] * vars[0] * vars[3] - params[23] * vars[7] - params[11] * vars[7]
 
-    output[8] = params[18]*vars[0]*vars[4] - params[24]*vars[8] - params[12]*vars[8]
+    output[8] = params[18] * vars[0] * vars[4] - params[24] * vars[8] - params[12] * vars[8]
 
-    output[9] = params[18]*vars[1]*vars[3] - params[25]*vars[9] - params[13]*vars[9]
+    output[9] = params[18] * vars[1] * vars[3] - params[25] * vars[9] - params[13] * vars[9]
 
-    output[10] = params[18]*vars[1]*vars[4] - params[26]*vars[10] - params[14]*vars[10]
+    output[10] = params[18] * vars[1] * vars[4] - params[26] * vars[10] - params[14] * vars[10]
 
-    output[11] = params[18]*vars[2]*vars[3] - params[27]*vars[11] - params[15]*vars[11]
+    output[11] = params[18] * vars[2] * vars[3] - params[27] * vars[11] - params[15] * vars[11]
 
-    output[12] = params[18]*vars[2]*vars[4] - params[28]*vars[12] - params[16]*vars[12]
+    output[12] = params[18] * vars[2] * vars[4] - params[28] * vars[12] - params[16] * vars[12]
 
-    output[13] = params[18]*vars[3]*vars[4] - params[29]*vars[13] - params[17]*vars[13]
+    output[13] = params[18] * vars[3] * vars[4] - params[29] * vars[13] - params[17] * vars[13]
 
     return output
 
@@ -124,7 +130,7 @@ def Euler_odes(params, step_size=0.01):
     # with torch.no_grad():
     proteins_init = torch.zeros(14)
     t = torch.tensor(0.0)
-    while t <= 24 * 10:
+    while t <= 24 * 7:
         # take the step
         proteins_init = proteins_init + step_size * odes(t, proteins_init, params)
         t += step_size
@@ -174,24 +180,23 @@ def loss(params):
     # Define l2-loss
     l2_loss = nn.MSELoss()
 
-    # Total loss
-    return l2_loss(TOC1_exp, TOC1_output) + l2_loss(ZTL_dark_exp, ZTL_dark_output) + l2_loss(GI_exp, GI_output) \
-           + l2_loss(PRR3_exp, PRR3_output)
+    total_loss = l2_loss(TOC1_exp, TOC1_output) + l2_loss(ZTL_dark_exp, ZTL_dark_output) + l2_loss(GI_exp, GI_output) \
+                 + l2_loss(PRR3_exp, PRR3_output)
 
-
-def stochastic_loss(params, batch_size=15):
-    # Experimental datas
-    TOC1_exp = torch.tensor([0.0649, 0.0346, 0.29, 0.987, 1, 0.645])
-    ZTL_dark_exp = torch.tensor([0.115, 0.187, 0.445, 1., 0.718, 0.56])
-    GI_exp = torch.tensor([0.237939, 0.0842713, 0.365812, 0.913379, 1., 0.425148, 0.208709, 0.0937085, 0.096325])
-    PRR3_exp = torch.tensor([0.021049, 0.0711328, 0.128753, 0.574524, 1., 0.587505, 0.371859, 0.355726, 0.104436])
-
-    # Output from ODEs
-    TOC1_output, ZTL_dark_output, GI_output, PRR3_output = Euler_odes(params)
-
-    # Define l2-loss
-    l2_loss = nn.MSELoss()
+    total_loss.backward()
 
     # Total loss
-    return l2_loss(TOC1_exp, TOC1_output) + l2_loss(ZTL_dark_exp, ZTL_dark_output) + l2_loss(GI_exp, GI_output) \
-           + l2_loss(PRR3_exp, PRR3_output)
+    return total_loss, params.grad.numpy()
+
+
+def PSO_loss(params):
+    output = []
+    for param in params:
+        params_ = torch.tensor(param)
+        output.append(loss(params_)[0].item())
+    return output
+
+
+def basinhopping_loss(params):
+    total_loss, total_grad = loss(torch.tensor(params, requires_grad=True))
+    return total_loss.item(), total_grad
