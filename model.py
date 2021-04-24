@@ -4,8 +4,14 @@ System of ODEs for Plant Circadian Clocks
 functions: odes, Euler_odes, simple_odes, Euler_simple_odes
 """
 import numpy as np
+from scipy.stats import levy_stable
 import torch
 import torch.nn as nn
+
+
+def get_lr(optimizer):
+    for param_group in optimizer.param_groups:
+        return param_group['lr']
 
 
 def mTOC1(t):
@@ -167,13 +173,21 @@ def Euler_odes(params, step_size=0.01):
     return T_output, Z_output, G_output, P_output
 
 
-def loss(params):
+def loss(params, optimizer=None, iter=1, gradient=True):
     # Experimental datas
     TOC1_exp = torch.tensor([0.0649, 0.0346, 0.29, 0.987, 1, 0.645])
     ZTL_dark_exp = torch.tensor([0.115, 0.187, 0.445, 1., 0.718, 0.56])
     GI_exp = torch.tensor([0.237939, 0.0842713, 0.365812, 0.913379, 1., 0.425148, 0.208709, 0.0937085, 0.096325])
     PRR3_exp = torch.tensor([0.021049, 0.0711328, 0.128753, 0.574524, 1., 0.587505, 0.371859, 0.355726, 0.104436])
 
+    # if gradient:
+    #     # Add noise (cf. SGLD, Neelakantan et al., 2016)
+    #     lr = get_lr(optimizer)
+    #     gamma = 0.55
+    #     params.data = params.data + lr * np.sqrt(lr / ((1 + iter)*gamma)) * torch.randn(30)
+        # params.data = params.data + np.sqrt(2 * get_lr(optimizer) / (1 + iter)) * torch.randn(30)
+        # alpha, sigma = torch.rand(1)*(1 + 1/iter) + (1 - 1/iter), lr / ((1 + iter)*gamma)
+        # params.data = params.data + lr * sigma * torch.tensor(levy_stable.rvs(alpha=alpha, beta=0, loc=0, size=30))
     # Output from ODEs
     TOC1_output, ZTL_dark_output, GI_output, PRR3_output = Euler_odes(params)
 
@@ -182,6 +196,7 @@ def loss(params):
 
     total_loss = l2_loss(TOC1_exp, TOC1_output) + l2_loss(ZTL_dark_exp, ZTL_dark_output) + l2_loss(GI_exp, GI_output) \
                  + l2_loss(PRR3_exp, PRR3_output)
+    return total_loss
 
     total_loss.backward()
 
@@ -193,10 +208,10 @@ def PSO_loss(params):
     output = []
     for param in params:
         params_ = torch.tensor(param)
-        output.append(loss(params_)[0].item())
+        output.append(loss(params_, gradient=False)[0].item())
     return output
 
 
 def basinhopping_loss(params):
-    total_loss, total_grad = loss(torch.tensor(params, requires_grad=True))
+    total_loss, total_grad = loss(torch.tensor(params, requires_grad=True), gradient=False)
     return total_loss.item(), total_grad
