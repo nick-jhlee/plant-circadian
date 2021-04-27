@@ -56,8 +56,8 @@ def simple_odes(t, vars, params):
     :param params: only 4 parameters!! (translation rates for each protein)
     :return: gradient flows at time t [d[TOC1]/dt, d[ZTL_dark]/dt, d[GI]/dt, d[PRR3]/dt]
     """
-    assert len(vars) == 14
-    assert len(params) == 14
+    assert len(vars) == 4
+    assert len(params) == 4
 
     # output = torch.zeros(4)
     #

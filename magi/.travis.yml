@@ -1,0 +1,41 @@
+## python for travis: https://docs.travis-ci.com/user/languages/python
+# R for travis: see documentation at https://docs.travis-ci.com/user/languages/r
+
+language: generic
+dist: bionic
+sudo: true
+cache: packages
+
+r:
+  - release
+
+python:
+  - "3.6"
+
+before_install:
+  - sudo apt-get install cmake -y
+  - sudo apt-get install gcc-6 g++-6 -y
+
+  - sudo apt-get install python3-tk python3-pip python3-venv python3-dev ipython3 -y
+  - python3 -m venv pyenv_magi
+  - source pyenv_magi/bin/activate
+  - export PYTHONPATH=$(pwd)/pymagi
+  - export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$(pwd)/cmagi/
+
+  - sudo add-apt-repository ppa:marutter/rrutter3.5 -y
+  - sudo apt-get update
+  - sudo apt install r-api-3.5 -y
+  - sudo apt-get install libblas-dev liblapack-dev gfortran -y
+  - mkdir -p ~/R/library
+  - export R_LIBS_USER=$HOME/R/library
+  - MAKE="make -j4" Rscript -e 'install.packages("devtools", repos="http://cran.us.r-project.org")'
+
+install:
+  - ./build.sh
+
+script:
+  - echo "testing code integrated in intallation"
+#  - R CMD build rmagi
+#  - R CMD check magi*tar.gz
+
+# need a shell to install Rtools if not already exist on Windows

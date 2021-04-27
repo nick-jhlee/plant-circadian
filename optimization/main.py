@@ -42,18 +42,18 @@ if gradient_based:
     # optimizer = optim.RMSprop([params], lr=0.1, momentum=0.1)
     lbfgs = False
 
-    init = np.concatenate((10 * np.ones(18), np.array([100, 10, 10]), 100 * np.ones(9)))
-    params_ = torch.tensor(init, requires_grad=True)
-    output = model.loss(params_, optimizer, iter)
-    print(params_)
-    print(output.item())
+    # init = np.concatenate((10 * np.ones(18), np.array([100, 10, 10]), 100 * np.ones(9)))
+    # params_ = torch.tensor(init, requires_grad=True)
+    # output, _ = model.loss(params_, optimizer, iter)
+    # print(params_)
+    # print(output)
     # for _ in range(20):
     #     tmp = abs(torch.tensor(levy_stable.rvs(alpha=1, beta=0, loc=0, size=30)))
     #     params_ = torch.tensor(tmp, requires_grad=True)
     #     output = model.loss(params_, optimizer, iter)
     #     print(params_)
     #     print(output.item())
-    raise ValueError("여기까")
+    # raise ValueError("여기까")
 
     # optimizer_name = "LBFGS"
     # optimizer = optim.LBFGS([params], lr=1)
@@ -127,11 +127,11 @@ else:
 
     elif optimizer_name == "basinhopping":
         param0 = np.ones(30)
-        minimizer_kwargs = {"method": "Newton-CG", "jac": True}
+        minimizer_kwargs = {"method": "L-BFGS-B", "jac": True}
 
         def print_log(params, f, accepted):
             print("at minimum %.8f accepted %s" % (f, int(accepted)))
 
-        ret = basinhopping(model.basinhopping_loss, param0, minimizer_kwargs=minimizer_kwargs, niter=5, callback=print_log)
+        ret = basinhopping(model.basinhopping_loss, param0, minimizer_kwargs=minimizer_kwargs, niter=10, callback=print_log)
         print("global minimum: params = {}, loss(params) = {}".format(ret.x, ret.fun))
         np.savetxt("final_params/{}_{}.csv".format(optimizer_name, datetime.now().strftime("%Y%m%d_%H%M%S")), ret.x)

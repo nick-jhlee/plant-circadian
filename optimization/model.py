@@ -196,7 +196,6 @@ def loss(params, optimizer=None, iter=1, gradient=True):
 
     total_loss = l2_loss(TOC1_exp, TOC1_output) + l2_loss(ZTL_dark_exp, ZTL_dark_output) + l2_loss(GI_exp, GI_output) \
                  + l2_loss(PRR3_exp, PRR3_output)
-    return total_loss
 
     total_loss.backward()
 
