@@ -1,7 +1,7 @@
 """
 System of ODEs for Plant Circadian Clocks
 
-functions: odes, Euler_odes, simple_odes, Euler_simple_odes
+functions: get_lr, mTOC1, mGI, mPRR3, light, odes, Euler_odes, loss, PSO_loss, basinhopping_loss 
 """
 import numpy as np
 from scipy.stats import levy_stable
