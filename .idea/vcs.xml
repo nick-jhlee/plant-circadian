@@ -2,6 +2,11 @@
 <project version="4">
   <component name="VcsDirectoryMappings">
     <mapping directory="$PROJECT_DIR$" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/VBODE" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/magi" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/magi/package/CppNumericalSolvers" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/magi/package/armadillo-code" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/magi/package/eigen-git-mirror" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/magi/package/pybind11" vcs="Git" />
   </component>
 </project>

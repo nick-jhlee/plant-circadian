@@ -14,7 +14,7 @@ fi
 export PROJECT=$(pwd)
 export BOOST=boost_1_70_0
 
-cd $PROJECT
+cd "$PROJECT"
 
 ./tools/dependencies.sh
 
@@ -23,7 +23,7 @@ cmake .
 cd cmagi
 make -j $CPU
 
-cd $PROJECT
+cd "$PROJECT"
 
 # build python
 cd pymagi
@@ -34,23 +34,23 @@ if [[ "$1" != "--skip-tests" ]]; then
   nosetests
 fi
 
-cd $PROJECT
+cd "$PROJECT"
 
-# build R
-export CODECOV_TOKEN="7b481576-694c-4591-8370-64f61df55bdc"
+# # build R
+# export CODECOV_TOKEN="7b481576-694c-4591-8370-64f61df55bdc"
 
-cd rmagi
-./r_build.sh
-if [[ "$1" != "--skip-tests" ]]; then
-  # Rscript -e 'devtools::test()'
-  Rscript -e 'testthat::test_package("magi")'
-  # Rscript -e 'covr::codecov(path = ".")'
-fi
+# cd rmagi
+# ./r_build.sh
+# if [[ "$1" != "--skip-tests" ]]; then
+#   # Rscript -e 'devtools::test()'
+#   Rscript -e 'testthat::test_package("magi")'
+#   # Rscript -e 'covr::codecov(path = ".")'
+# fi
 
-cd $PROJECT
+# cd $PROJECT
 
-# build MATLAB
-cd matlabmagi
-./matlab_build.sh
+# # build MATLAB
+# cd matlabmagi
+# ./matlab_build.sh
 
-cd $PROJECT
+# cd $PROJECT
