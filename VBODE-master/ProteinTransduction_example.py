@@ -43,9 +43,12 @@ class ProteinGenModel(PyroModule):
         param_shape = 6
         states = self._ode_op.apply(self.ode_params.view((-1,param_shape)), \
             (self._ode_model,))
-        # for i in range(len(data)):
-        #     pyro.sample("obs_{}".format(i), dist.Normal(loc = states[...,i,:], \
-        #         scale = sd).to_event(1), obs=data[i,:])           
+        for i in range(len(data)):
+            try:
+                pyro.sample("obs_{}".format(i), dist.Normal(loc = states[...,i,:], \
+                    scale = sd).to_event(1), obs=data[i,:])
+            except:
+                print("ERROR")
         return states
 
 def plot_marginals(vb_params, mc_params, param_names, real_params=None, rows=4):
@@ -110,11 +113,11 @@ if __name__ == '__main__':
     if not(args.adjoint):
         print('Using VJP by Forward Sensitivity')
 
-        method = 'NUTS'
-        NUTS_samples = run_inference(Y, ProteinGenModel, pr_ode_model, method, \
-            iterations = args.num_samples, warmup_steps = args.warmup_steps)
-        mc_params=np.concatenate((NUTS_samples['ode_params'],
-                        NUTS_samples['scale'][:,None]),axis=1)
+        # method = 'NUTS'
+        # NUTS_samples = run_inference(Y, ProteinGenModel, pr_ode_model, method, \
+        #     iterations = args.num_samples, warmup_steps = args.warmup_steps)
+        # mc_params=np.concatenate((NUTS_samples['ode_params'],
+        #                 NUTS_samples['scale'][:,None]),axis=1)
 
         method = 'VI'
         lr = 0.5
@@ -125,17 +128,18 @@ if __name__ == '__main__':
         np.concatenate((vb_samples['ode_params'].detach().numpy().reshape((args.num_qsamples,6)), \
             vb_samples['scale'].detach().numpy().reshape((args.num_qsamples,1))),axis=1)
         
-        plot_marginals(vb_params, mc_params, param_names, real_params=real_params)
+        # plot_marginals(vb_params, mc_params, param_names, real_params=real_params)
+        plot_marginals(vb_params, vb_params, param_names, real_params=real_params)
     else:
         print('Using VJP by Adjoint Sensitivity')
         pr_ode_model = AdjointSensManualJacobians(rhs_f, jac_x_f, jac_p_f, 5, 6, \
             times, 1e-5, 1e-6, [1,0,1,0,0])  
         
-        method = 'NUTS'
-        NUTS_samples = run_inference(Y, ProteinGenModel, pr_ode_model, method, \
-            iterations = args.num_samples, warmup_steps = args.warmup_steps)
-        mc_params=np.concatenate((NUTS_samples['ode_params'],
-                        NUTS_samples['scale'][:,None]),axis=1)
+        # method = 'NUTS'
+        # NUTS_samples = run_inference(Y, ProteinGenModel, pr_ode_model, method, \
+        #     iterations = args.num_samples, warmup_steps = args.warmup_steps)
+        # mc_params=np.concatenate((NUTS_samples['ode_params'],
+        #                 NUTS_samples['scale'][:,None]),axis=1)
 
         method = 'VI'
         lr = 0.5
@@ -146,6 +150,6 @@ if __name__ == '__main__':
         np.concatenate((vb_samples['ode_params'].detach().numpy().reshape((args.num_qsamples,6)), \
             vb_samples['scale'].detach().numpy().reshape((args.num_qsamples,1))),axis=1)   
           
-        plot_marginals(vb_params, mc_params, param_names, real_params=real_params)
-   
+        # plot_marginals(vb_params, mc_params, param_names, real_params=real_params)
+        plot_marginals(vb_params, vb_params, param_names, real_params=real_params)
     

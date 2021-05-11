@@ -44,8 +44,11 @@ class SIRGenModel(PyroModule):
         ode_params = torch.stack([p1,p2,p3,1- p3,R0], dim=1)
         SIR_sim = self._ode_op.apply(ode_params, (self._ode_model,))
         
-        # for i in range(len(data)):
-        #     pyro.sample("obs_{}".format(i), dist.Poisson(SIR_sim[...,i,1]*N_pop), obs=data[i])
+        for i in range(len(data)):
+            try:
+                pyro.sample("obs_{}".format(i), dist.Poisson(SIR_sim[...,i,1]*N_pop), obs=data[i])
+            except:
+                print("ERROR (invalid parameter for Poisson...!)")
         return SIR_sim
 
 def plot_marginals(vb_params, mc_params, param_names, real_params=None, rows=4):
