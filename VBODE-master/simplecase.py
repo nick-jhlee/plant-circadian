@@ -13,50 +13,83 @@ import argparse
 from inference.inference import prepare_symbolic, run_inference
 from ode_systems.forward_sensitivity_solvers import ForwardSensManualJacobians
 from ode_systems.adjoint_sensitivity_solvers import AdjointSensManualJacobians
+from scipy.interpolate import splrep, splev
 
-### Define ODE right hand side ###
+times1 = np.array([0, 1, 5, 9, 13, 17, 21, 24])
+mTOC1s = np.array([0.401508, 0.376, 0.376, 0.69, 1, 0.52, 0.489, 0.401508])
+
+times2 = np.array([0, 3, 6, 9, 12, 15, 18, 21, 24])
+mGIs = np.array([0.0535789, 0.277942, 0.813305, 1., 0.373043, 0.00648925, 0.00439222, 0.0122333, 0.0535789])
+
+times3 = np.array([0, 3, 6, 9, 12, 15, 18, 21, 24])
+mPRR3s = np.array([0.010205, 0.00916596, 0.126271, 0.801952, 1., 0.091304, 0.0357569, 0.022007, 0.010205])
+
+spl1 = splrep(times1, mTOC1s, per=True)
+spl2 = splrep(times2, mGIs, per=True)
+spl3 = splrep(times3, mPRR3s, per=True)
+
+def mTOC1(t):
+#    t_ = t % 24
+    a = splev([t], spl1)[0]
+    return  np.maximum(a,0) #value cannot be zero
+
+def mGI(t):
+#    t_ = t % 24
+    a = splev([t], spl2)[0]
+    return  np.maximum(a,0) #value cannot be zero
+
+def mPRR3(t):
+#    t_ = t % 24
+    a = splev([t], spl3)[0]
+    return np.maximum(a,0) #value cannot be zero
+
+### Define ODE right hand side ###  
 def r(y, t, p):
-    S, I, R=y
-    beta, gamma, S0, I0, R0 = p
-    dS_dt = - (beta * I * S)
-    dI_dt = (beta * I * S) - (gamma * I)
-    dR_dt = gamma * I
-    return dS_dt,dI_dt,dR_dt
+#    Ttil, Gtil, Zdtil, Ptil = y
+    Gtil, Ptil = y
+#    d_t, d_G, d_zd, d_P = p
+    d_G,  d_P = p
+#    dTtil_dt =  mTOC1(t) -d_t* Ttil
+    dGtil_dt = mGI(t) - d_G* Gtil
+#    dZdtil_dt = 1 - d_zd * Zdtil
+    dPtil_dt = mPRR3(t) - d_P * Ptil
+#    return dTtil_dt, dGtil_dt, dZdtil_dt, dPtil_dt
+    return dGtil_dt, dPtil_dt
 
-### Define generative model ###
+### Define generative model ###    
 class SIRGenModel(PyroModule):
-    def __init__(self, ode_op, ode_model):
-        super(SIRGenModel, self).__init__()
+    def __init__(self, ode_op, ode_model):        
+        super(SIRGenModel, self).__init__()           
         self._ode_op = ode_op
         self._ode_model = ode_model
-
+        # TODO: Incorporate appropriate priors (cf. MATALB codes from Daewook)
         self.ode_params1 = PyroSample(dist.Gamma(2,1))
         self.ode_params2 = PyroSample(dist.Gamma(2,1))
-        self.ode_params3 = PyroSample(dist.Beta(0.5,0.5))
+#        self.ode_params3 = PyroSample(dist.Gamma(2,1))
+#        self.ode_params4 = PyroSample(dist.Gamma(2,1))
 
-    def forward(self, data):
-        N_pop = 300
+    def forward(self, data): 
 
         p1 = self.ode_params1.view((-1,))
         p2 = self.ode_params2.view((-1,))
-        p3 = self.ode_params3.view((-1,))
-        R0 = pyro.deterministic('R0', torch.zeros_like(p1))
-        ode_params = torch.stack([p1,p2,p3,1- p3,R0], dim=1)
-        SIR_sim = self._ode_op.apply(ode_params, (self._ode_model,))
-
+#        p3 = self.ode_params3.view((-1,))
+#        p4 = self.ode_params3.view((-1,))
+        ode_params = torch.stack([p1,p2], dim=1)
+        simple_sim = self._ode_op.apply(ode_params, (self._ode_model,))
+        
         for i in range(len(data)):
             try:
-                pyro.sample("obs_{}".format(i), dist.Poisson(SIR_sim[...,i,1]*N_pop), obs=data[i])
+                pyro.sample("obs_{}".format(i), dist.Poisson(simple_sim[...,i,1]), obs=data[i])
             except:
                 print("ERROR (invalid parameter for Poisson...!)")
-        return SIR_sim
+        return simple_sim
 
 def plot_marginals(vb_params, mc_params, param_names, real_params=None, rows=4):
     sns.set_context("paper", font_scale=1)
     sns.set(rc={"figure.figsize":(9,9),"font.size":16,"axes.titlesize":16,"axes.labelsize":16,
            "xtick.labelsize":15, "ytick.labelsize":15},style="white")
 
-    for i, p in enumerate(param_names):
+    for i, p in enumerate(param_names):        
         plt.subplot(rows, 2, i+1)
         if real_params is not None:
             plt.axvline(real_params[i], linewidth=2.5, color='black')
@@ -66,10 +99,10 @@ def plot_marginals(vb_params, mc_params, param_names, real_params=None, rows=4):
         else:
             sns.kdeplot(vb_params[:, i], linewidth = 2.5, color='magenta')
             sns.kdeplot(mc_params[:, i], linewidth = 2.5, color='orange')
-
+            
         if i%2==0:
             plt.ylabel('Frequency')
-        plt.xlabel(param_names[i])
+        plt.xlabel(param_names[i])        
         if i<1:
             plt.legend(bbox_to_anchor=(0., 1.02, 1., .102), loc='lower center', ncol=2, fontsize=18)
     plt.subplots_adjust(hspace=0.7)
@@ -83,54 +116,42 @@ if __name__ == '__main__':
     parser.add_argument('--adjoint', type=bool, default=False, metavar='N',
                     help='Method to compute VJP')
     parser.add_argument('--iterations', type=int, default=10000, metavar='N',
-                    help='number of VI iterations')
+                    help='number of VI iterations') 
     parser.add_argument('--num_qsamples', type=int, default=1000, metavar='N',
-                    help='number of draws from variational posterior ')
+                    help='number of draws from variational posterior ')  
     parser.add_argument('--num_samples', type=int, default=1000, metavar='N',
-                    help='number of NUTS post warm-up samples')
+                    help='number of NUTS post warm-up samples')    
     parser.add_argument('--warmup_steps', type=int, default=500, metavar='N',
-                    help='number of NUTS warmup_steps')
+                    help='number of NUTS warmup_steps')                
     args = parser.parse_args()
 
-    ### Generate the symbolic system and Tristan da Cunha Data ###
+    ### Generate the symbolic system and Tristan da Cunha Data ###       
     _rhs = r
-    _y, _p = sym.symbols('y:3'), sym.symbols('p:5')
-    rhs_f, jac_x_f, jac_p_f = prepare_symbolic(_rhs, _y, _p)
-    times = np.arange(0,21,1)
-
+    _y, _p = sym.symbols('y:2'), sym.symbols('p:2')
+ #TODO : input t
+    rhs_f, jac_x_f, jac_p_f = prepare_symbolic_plant(_rhs, _y, _p, t)
+    times = np.array([0, 3, 6, 9, 12, 15, 18, 21, 24])
+    
     data =np.array([
-            [1, 0],     # day 1
-            [1, 0],
-            [3, 0],
-            [7, 0],
-            [6, 5],     # day 5
-            [10, 7],
-            [13, 8],
-            [13, 13],
-            [14, 13],
-            [14, 16],    # day 10
-            [17, 17],
-            [10, 24],
-            [6, 30],
-            [6, 31],
-            [4, 33],    # day 15
-            [3, 34],
-            [1, 36],
-            [1, 36],
-            [1, 36],
-            [1, 36],    # day 20
-            [0, 37],    # day 21
+            [0.237939, 0.021049],   # 0
+            [0.0842713, 0.0711328], #3
+            [0.365812,  0.128753], #6
+            [0.913379,  0.574524], #9
+            [1., 1.], #12
+            [ 0.425148, 0.587505],  #15
+            [ 0.208709, 0.371859], #18
+            [0.0937085,  0.355726], #21
+            [0.096325, 0.104436], #24
         ])
-    I, R = data[:,0], data[:,1]
-    Y = I
-
+    Gtil, Ptil = data[:,0], data[:,1]
+            
     ### Run inference ###
     param_names = [r"$\beta$",r"$\gamma$", r"$s_0$"]
     if not(args.adjoint):
-        print('Using VJP by Forward Sensitivity')
-        sir_ode_model = ForwardSensManualJacobians(rhs_f, jac_x_f, jac_p_f, 3, 5, \
-            times, 1e-5, 1e-6, [0.9,0.1,0.0])
-        sir_ode_model.set_unknown_y0()
+        print('Using VJP by Forward Sensitivity')   
+        sir_ode_model = ForwardSensManualJacobians(rhs_f, jac_x_f, jac_p_f, 2, 2, \
+            times, 1e-5, 1e-6, [0.237939, 0.021049])
+        sir_ode_model.set_unknown_y0()    
         # method = 'NUTS'
         # NUTS_samples = run_inference(Y, SIRGenModel, sir_ode_model, method, \
         #     iterations = args.num_samples, warmup_steps = args.warmup_steps)
@@ -138,7 +159,7 @@ if __name__ == '__main__':
         #                     NUTS_samples['ode_params2'][:,None],
         #                     NUTS_samples['ode_params3'][:,None]
         #                     ),axis=1)
-
+                                  
         method = 'VI'
         lr = 0.5
         vb_samples = run_inference(Y, SIRGenModel, sir_ode_model, method, \
@@ -153,9 +174,9 @@ if __name__ == '__main__':
         plot_marginals(vb_params, vb_params, param_names, rows=2)
     else:
         print('Using VJP by Adjoint Sensitivity')
-        sir_ode_model = AdjointSensManualJacobians(rhs_f, jac_x_f, jac_p_f, 3, 5, \
-            times, 1e-5, 1e-6, [0.9,0.1,0.0])
-        sir_ode_model.set_unknown_y0()
+        sir_ode_model = AdjointSensManualJacobians(rhs_f, jac_x_f, jac_p_f, 2, 2, \
+            times, 1e-5, 1e-6, [0.237939, 0.021049])
+        sir_ode_model.set_unknown_y0()    
         # method = 'NUTS'
         # NUTS_samples = run_inference(Y, SIRGenModel, sir_ode_model, method, \
         #     iterations = args.num_samples, warmup_steps = args.warmup_steps)
@@ -163,7 +184,7 @@ if __name__ == '__main__':
         #                     NUTS_samples['ode_params2'][:,None],
         #                     NUTS_samples['ode_params3'][:,None]
         #                     ),axis=1)
-
+        
         method = 'VI'
         lr = 0.5
         vb_samples = run_inference(Y, SIRGenModel, sir_ode_model, method, \

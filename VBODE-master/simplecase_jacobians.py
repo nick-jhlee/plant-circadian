@@ -18,7 +18,7 @@ from ode_systems.adjoint_sensitivity_solvers import AdjointSensTorchJacobians
 
 
 ### Define ODE right hand side,
-### in a way to facilitate both pure Python and torch ###
+### in a way to facilitate both pure Python and torch ###  
 def r(y, t, p, tch=False):
     dS_dt = - (p[0] * y[1] * y[0])
     dI_dt = (p[0] * y[1] * y[0]) - (p[1] * y[1])
@@ -33,6 +33,7 @@ class SIRGenModel(PyroModule):
         self._ode_op = ode_op
         self._ode_model = ode_model
 
+        #TODO: Incorporate appropriate priors (cf. MATALB codes from Daewook)
         self.ode_params1 = PyroSample(dist.Gamma(2, 1))
         self.ode_params2 = PyroSample(dist.Gamma(2, 1))
         self.ode_params3 = PyroSample(dist.Beta(0.5, 0.5))
@@ -87,7 +88,7 @@ if __name__ == '__main__':
                         help='number of draws from variational posterior ')
     args = parser.parse_args()
 
-    ### Generate Tristan da Cunha Data ###
+    ### Generate Tristan da Cunha Data ###       
     times = np.arange(0, 21, 1)
     data = np.array([
         [1, 0],  # day 1

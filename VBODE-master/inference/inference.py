@@ -32,6 +32,22 @@ def prepare_symbolic(rhs, y, p):
     print('\n\n Jacobian of the velocity wrt theta, df/d theta: \n\n', jac_p)
     return rhs_f, jac_x_f, jac_p_f
 
+def prepare_symbolic_plant(rhs, y, p,t=None):
+    ydot = rhs(y, t, p)
+    ydot
+    t = sym.symbols('t')
+    rhs_f = sym.lambdify((y, t, p), ydot)
+    jac_x = sym.Matrix(ydot).jacobian(y)
+    jac_p = sym.Matrix(ydot).jacobian(p)
+    jac_x_f = sym.lambdify((y, p), jac_x)
+    jac_p_f = sym.lambdify((y, p), jac_p)
+    print('\n\n The velocity field df/dt : \n\n', ydot)
+    print('\n\n Jacobian of the velocity wrt X(t), df/d X: \n\n', jac_x)
+    print('\n\n Jacobian of the velocity wrt theta, df/d theta: \n\n', jac_p)
+    return rhs_f, jac_x_f, jac_p_f
+
+
+
 
 def run_inference(data, gen_model, ode_model, method, iterations=10000, num_particles=1, \
                   num_samples=1000, warmup_steps=500, init_scale=0.1, \
@@ -76,7 +92,8 @@ def run_inference(data, gen_model, ode_model, method, iterations=10000, num_part
 
         nuts_kernel = NUTS(model, adapt_step_size=True, init_strategy=init_to_median)
 
-        mcmc = MCMC(nuts_kernel, num_samples=iterations, warmup_steps=warmup_steps, num_chains=2)
+        # mcmc = MCMC(nuts_kernel, num_samples=iterations, warmup_steps=warmup_steps, num_chains=2)
+        mcmc = MCMC(nuts_kernel, num_samples=iterations, warmup_steps=warmup_steps, num_chains=1)
         t0 = timer.time()
         mcmc.run(torch_data)
         t1 = timer.time()
