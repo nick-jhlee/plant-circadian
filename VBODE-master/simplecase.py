@@ -79,7 +79,6 @@ class PlantModel(PyroModule):
     #        self.ode_params4 = PyroSample(dist.Gamma(2,1))
 
     def forward(self, data):
-
         p1 = self.ode_params1.view((-1,))
         p2 = self.ode_params2.view((-1,))
         #        p3 = self.ode_params3.view((-1,))
@@ -101,6 +100,8 @@ def plot_marginals(vb_params, mc_params, param_names, real_params=None, rows=4):
     sns.set(rc={"figure.figsize": (9, 9), "font.size": 16, "axes.titlesize": 16, "axes.labelsize": 16,
                 "xtick.labelsize": 15, "ytick.labelsize": 15}, style="white")
 
+    print(vb_params)
+    np.savetxt('vb_params.csv', vb_params)
     for i, p in enumerate(param_names):
         plt.subplot(rows, 2, i + 1)
         if real_params is not None:
@@ -158,7 +159,7 @@ if __name__ == '__main__':
         [0.096325, 0.104436],  # 24
     ])
     Gtil, Ptil = data[:, 0], data[:, 1]
-    Y = Gtil
+    Y = data
 
     ### Run inference ###
     param_names = [r"$d_G$", r"$d_P$"]
@@ -208,5 +209,4 @@ if __name__ == '__main__':
                                     vb_samples['ode_params2'][:, None].detach().numpy()
                                     ), axis=1)
         # plot_marginals(vb_params, mc_params, param_names, rows=2)
-        np.savetxt('vb_params.csv', vb_params)
         plot_marginals(vb_params, vb_params, param_names, rows=2)
