@@ -32,10 +32,10 @@ def prepare_symbolic(rhs, y, p):
     print('\n\n Jacobian of the velocity wrt theta, df/d theta: \n\n', jac_p)
     return rhs_f, jac_x_f, jac_p_f
 
-def prepare_symbolic_plant(rhs, y, p,t=None):
+
+def prepare_symbolic_plant(rhs, y, p, t=None):
     ydot = rhs(y, t, p)
-    ydot
-    t = sym.symbols('t')
+    # t = sym.symbols('t')
     rhs_f = sym.lambdify((y, t, p), ydot)
     jac_x = sym.Matrix(ydot).jacobian(y)
     jac_p = sym.Matrix(ydot).jacobian(p)
@@ -47,11 +47,8 @@ def prepare_symbolic_plant(rhs, y, p,t=None):
     return rhs_f, jac_x_f, jac_p_f
 
 
-
-
-def run_inference(data, gen_model, ode_model, method, iterations=10000, num_particles=1, \
-                  num_samples=1000, warmup_steps=500, init_scale=0.1, \
-                  seed=12, lr=0.5, return_sites=("_RETURN")):
+def run_inference(data, gen_model, ode_model, method, iterations=10000, num_particles=1, num_samples=1000, warmup_steps=500, init_scale=0.1,
+                  seed=12, lr=0.5, return_sites="_RETURN"):
     torch_data = torch.tensor(data, dtype=torch.float)
     if isinstance(ode_model, ForwardSensManualJacobians) or \
             isinstance(ode_model, ForwardSensTorchJacobians):
