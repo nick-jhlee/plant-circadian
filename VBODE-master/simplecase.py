@@ -145,6 +145,7 @@ if __name__ == '__main__':
     # TODO : input _t
     _t = sym.symbols('t')
     rhs_f, jac_x_f, jac_p_f = prepare_symbolic_plant(_rhs, _y, _p, _t)
+    # TODO add 7*24 to all array
     times = np.array([0, 3, 6, 9, 12, 15, 18, 21, 24])
 
     data = np.array([
