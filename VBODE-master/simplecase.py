@@ -91,7 +91,7 @@ class PlantModel(PyroModule):
                 #TODO: Which distribution to use?
                 pyro.sample("obs_{}".format(i), dist.Exponential(simple_sim[..., i, 1]), obs=data[i])
             except:
-                print("ERROR (invalid parameter for Poisson...!)")
+                print("ERROR (invalid parameter for Exp...!)")
         return simple_sim
 
 
@@ -159,7 +159,7 @@ if __name__ == '__main__':
         [0.096325, 0.104436],  # 24
     ])
     Gtil, Ptil = data[:, 0], data[:, 1]
-    Y = data
+    Y = Gtil
 
     ### Run inference ###
     param_names = [r"$d_G$", r"$d_P$"]

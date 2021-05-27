@@ -20,7 +20,6 @@ from ode_systems.adjoint_sensitivity_solvers import AdjointSensManualJacobians, 
 
 def prepare_symbolic(rhs, y, p):
     ydot = rhs(y, None, p)
-    ydot
     t = sym.symbols('t')
     rhs_f = sym.lambdify((y, t, p), ydot)
     jac_x = sym.Matrix(ydot).jacobian(y)

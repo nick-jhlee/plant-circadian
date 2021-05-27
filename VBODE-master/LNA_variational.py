@@ -47,7 +47,8 @@ class LNAGenModel(PyroModule):
         p3 = self.ode_params3.view((-1,))
 
         for i in range(1, len(data)):
-            z_start = torch.stack([*data[i-1,:],*torch.zeros(4)])
+            z_start = torch.stack([*data[i-1,:],*torch.zeros(0)])
+            print(z_start)
             z_cov = self._ode_op.apply(torch.stack([p1,p2/100,p3], dim=-1), (self._ode_model, z_start))[...,-1,:]
             
             pyro.sample("obs_{}".format(i), D.MultivariateNormal(z_cov[...,:2], covariance_matrix=z_cov[...,2:].view((-1,2,2))), obs=data[i,:])
