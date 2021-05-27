@@ -14,42 +14,41 @@ import argparse
 from inference.inference import prepare_symbolic_plant, run_inference
 from ode_systems.forward_sensitivity_solvers import ForwardSensManualJacobians
 from ode_systems.adjoint_sensitivity_solvers import AdjointSensManualJacobians
-from scipy.interpolate import splrep, splev
 from sympy import interpolating_spline
 
-times1 = np.array([0, 1, 5, 9, 13, 17, 21, 24], dtype=float)
-mTOC1s = np.array([0.401508, 0.376, 0.376, 0.69, 1, 0.52, 0.489, 0.401508])
+init_days = 2
 
-times2 = np.array([0, 3, 6, 9, 12, 15, 18, 21, 24], dtype=float)
-mGIs = np.array([0.0535789, 0.277942, 0.813305, 1., 0.373043, 0.00648925, 0.00439222, 0.0122333, 0.0535789])
 
-times3 = np.array([0, 3, 6, 9, 12, 15, 18, 21, 24], dtype=float)
-mPRR3s = np.array([0.010205, 0.00916596, 0.126271, 0.801952, 1., 0.091304, 0.0357569, 0.022007, 0.010205])
+def extend_time(times_init):
+    times_init = np.array(times_init, dtype=float)
+    times = np.array(times_init, dtype=float)
+    if init_days < 1:
+        return times
+    for day in range(1, init_days + 1):
+        times = np.append(times, times_init + 24 * day)
+    return times
 
-# spl1 = splrep(times1, mTOC1s, per=True)
-# spl2 = splrep(times2, mGIs, per=True)
-# spl3 = splrep(times3, mPRR3s, per=True)
+
+times1 = extend_time([0, 1, 5, 9, 13, 17, 21])
+mTOC1s = np.array([0.401508, 0.376, 0.376, 0.69, 1, 0.52, 0.489] * (init_days + 1))
+
+times2 = extend_time([0, 3, 6, 9, 12, 15, 18, 21])
+mGIs = np.array([0.0535789, 0.277942, 0.813305, 1., 0.373043, 0.00648925, 0.00439222, 0.0122333] * (init_days + 1))
+
+times3 = extend_time([0, 3, 6, 9, 12, 15, 18, 21])
+mPRR3s = np.array([0.010205, 0.00916596, 0.126271, 0.801952, 1., 0.091304, 0.0357569, 0.022007] * (init_days + 1))
 
 
 def mTOC1(t):
-    #    t_ = t % 24
     return interpolating_spline(1, t, times1, mTOC1s)
-    # a = splev([t], spl1)[0]
-    # return np.maximum(a, 0)  # value cannot be zero
 
 
 def mGI(t):
-    #    t_ = t % 24
-    return interpolating_spline(1, t,times2, mGIs)
-    # a = splev([t], spl2)[0]
-    # return np.maximum(a, 0)  # value cannot be zero
+    return interpolating_spline(1, t, times2, mGIs)
 
 
 def mPRR3(t):
-    #    t_ = t % 24
-    return interpolating_spline(1, t,times3, mPRR3s)
-    # a = splev([t], spl3)[0]
-    # return np.maximum(a, 0)  # value cannot be zero
+    return interpolating_spline(1, t, times3, mPRR3s)
 
 
 ### Define ODE right hand side ###
@@ -75,10 +74,13 @@ class PlantModel(PyroModule):
         # TODO: Incorporate appropriate priors (cf. MATALB codes from Daewook)
         self.ode_params1 = PyroSample(dist.Gamma(2, 1))
         self.ode_params2 = PyroSample(dist.Gamma(2, 1))
+
     #        self.ode_params3 = PyroSample(dist.Gamma(2,1))
     #        self.ode_params4 = PyroSample(dist.Gamma(2,1))
 
     def forward(self, data):
+        scale = pyro.sample("scale", dist.HalfNormal(0.1))
+        sd = scale.view((-1,)).unsqueeze(1)
         p1 = self.ode_params1.view((-1,))
         p2 = self.ode_params2.view((-1,))
         #        p3 = self.ode_params3.view((-1,))
@@ -88,10 +90,13 @@ class PlantModel(PyroModule):
 
         for i in range(len(data)):
             try:
-                #TODO: Which distribution to use?
-                pyro.sample("obs_{}".format(i), dist.Exponential(simple_sim[..., i, 1]), obs=data[i])
+                # TODO: Which distribution to use?
+                # pyro.sample("obs_{}".format(i), dist.Exponential(simple_sim[..., i, 0]), obs=data[i])
+                pyro.sample("obs_{}".format(i), dist.Normal(loc=simple_sim[..., i, :], scale=sd).to_event(1),
+                            obs=data[i, :])
             except:
-                print("ERROR (invalid parameter for Exp...!)")
+                print(simple_sim[..., i, :])
+                print("ERROR (invalid parameter for Normal...!): ")
         return simple_sim
 
 
@@ -101,7 +106,7 @@ def plot_marginals(vb_params, mc_params, param_names, real_params=None, rows=4):
                 "xtick.labelsize": 15, "ytick.labelsize": 15}, style="white")
 
     print(vb_params)
-    np.savetxt('vb_params.csv', vb_params)
+    np.savetxt('vb_params.csv', vb_params, delimiter=',')
     for i, p in enumerate(param_names):
         plt.subplot(rows, 2, i + 1)
         if real_params is not None:
@@ -137,30 +142,32 @@ if __name__ == '__main__':
                         help='number of NUTS post warm-up samples')
     parser.add_argument('--warmup_steps', type=int, default=500, metavar='N',
                         help='number of NUTS warmup_steps')
+    # parser.add_argument('--init_days', type=int, default=1, metavar='N',
+    #                     help='number of days to be pre-computed for convergence to periodic function')
     args = parser.parse_args()
 
-    ### Generate the symbolic system and Tristan da Cunha Data ###       
+    ### Generate the symbolic system ###
     _rhs = r
     _y, _p = sym.symbols('y:2'), sym.symbols('p:2')
     # TODO : input _t
     _t = sym.symbols('t')
     rhs_f, jac_x_f, jac_p_f = prepare_symbolic_plant(_rhs, _y, _p, _t)
-    # TODO add 7*24 to all array
-    times = np.array([0, 3, 6, 9, 12, 15, 18, 21, 24])
 
+    ### Input experimental data ###
+    times = np.array([0, 3, 6, 9, 12, 15, 18, 21, 24]) + ((init_days - 1) * 24)
     data = np.array([
-        [0.237939, 0.021049],  # 0
-        [0.0842713, 0.0711328],  # 3
-        [0.365812, 0.128753],  # 6
-        [0.913379, 0.574524],  # 9
-        [1., 1.],  # 12
-        [0.425148, 0.587505],  # 15
-        [0.208709, 0.371859],  # 18
-        [0.0937085, 0.355726],  # 21
-        [0.096325, 0.104436],  # 24
+        [0.237939, 0.021049],  # 0 + (init_days - 1) * 24
+        [0.0842713, 0.0711328],  # 3 + (init_days - 1) * 24
+        [0.365812, 0.128753],  # 6 + (init_days - 1) * 24
+        [0.913379, 0.574524],  # 9 + (init_days - 1) * 24
+        [1., 1.],  # 12 + (init_days - 1) * 24
+        [0.425148, 0.587505],  # 15 + (init_days - 1) * 24
+        [0.208709, 0.371859],  # 18 + (init_days - 1) * 24
+        [0.0937085, 0.355726],  # 21 + (init_days - 1) * 24
+        [0.096325, 0.104436],  # 24 + (init_days - 1) * 24
     ])
     Gtil, Ptil = data[:, 0], data[:, 1]
-    Y = Gtil
+    Y = data
 
     ### Run inference ###
     param_names = [r"$d_G$", r"$d_P$"]
@@ -168,7 +175,8 @@ if __name__ == '__main__':
         print('Using VJP by Forward Sensitivity')
         plant_ode_model = ForwardSensManualJacobians(rhs_f, jac_x_f, jac_p_f, 2, 2,
                                                      times, 1e-5, 1e-6, [0.237939, 0.021049])
-        plant_ode_model.set_unknown_y0()
+
+        # plant_ode_model.set_unknown_y0()
         # method = 'NUTS'
         # NUTS_samples = run_inference(Y, SIRGenModel, sir_ode_model, method, \
         #     iterations = args.num_samples, warmup_steps = args.warmup_steps)
@@ -192,7 +200,7 @@ if __name__ == '__main__':
         print('Using VJP by Adjoint Sensitivity')
         plant_ode_model = AdjointSensManualJacobians(rhs_f, jac_x_f, jac_p_f, 2, 2,
                                                      times, 1e-5, 1e-6, [0.237939, 0.021049])
-        plant_ode_model.set_unknown_y0()
+        # plant_ode_model.set_unknown_y0()
         # method = 'NUTS'
         # NUTS_samples = run_inference(Y, SIRGenModel, sir_ode_model, method, \
         #     iterations = args.num_samples, warmup_steps = args.warmup_steps)
