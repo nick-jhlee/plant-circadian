@@ -14,21 +14,25 @@ gip=[0 3 6 9 12 15 18 21 24; ...
 prr3p=[0 3 6 9 12 15 18 21 24; ...
     0.021049, 0.0711328, 0.128753, 0.574524, 1., 0.587505, 0.371859, 0.355726, 0.104436];
 
-init_gi =  0.237939;
-init_prr3 =  0.021049;
-d_G = 0.76;
-d_P = 1.1;
+% init_gi =  0.237939;
+% init_prr3 =  0.021049;
+init_gi =  0.222;
+init_prr3 =  0.0167;
+d_G = 0.853;
+d_P = 0.819;
+init_days = 2;
 %time interval and initial condition
 
 
-t_interval = [0 24]+24*2;
+t_interval = [0 72];
+%t_interval = [0 24]+24*init_days;
 init_cond = [init_gi init_prr3];
 %solution
 [t,y] = ode45(@(t,y) odefcn(t,y,d_G,d_P) , t_interval , init_cond);
 %plot
-%plot(t,y(:,1),'b',t,y(:,2),'r');
+plot(t,y(:,1),'b',t,y(:,2),'r');
 plot(t,y(:,1),'b',t,y(:,2),'r');
 hold on;
-plot(gip(1,:)+24*2,gip(2,:),'.', 'MarkerSize',20);
-plot(prr3p(1,:)+24*2,prr3p(2,:),'.','MarkerSize',15);
+plot(gip(1,:)+24*init_days,gip(2,:),'b.', 'MarkerSize', 30);
+plot(prr3p(1,:)+24*init_days,prr3p(2,:),'r.','MarkerSize', 30);
 hold off

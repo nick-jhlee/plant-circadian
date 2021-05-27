@@ -41,7 +41,7 @@ class ProteinGenModel(PyroModule):
         scale = pyro.sample("scale", dist.HalfNormal(0.1))
         sd = scale.view((-1,)).unsqueeze(1)
         param_shape = 6
-        states = self._ode_op.apply(self.ode_params.view((-1,param_shape)), \
+        states = self._ode_op.apply(self.ode_params.view((-1, param_shape)), \
             (self._ode_model,))
         for i in range(len(data)):
             try:

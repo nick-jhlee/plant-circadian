@@ -131,7 +131,7 @@ if __name__ == '__main__':
 
     ### Run inference ###
     param_names = [r"$\beta$", r"$\gamma$", r"$s_0$"]
-    if not (args.adjoint):
+    if not args.adjoint:
         print('Using VJP by Forward Sensitivity')
         sir_ode_model = ForwardSensManualJacobians(rhs_f, jac_x_f, jac_p_f, 3, 5, \
                                                    times, 1e-5, 1e-6, [0.9, 0.1, 0.0])
