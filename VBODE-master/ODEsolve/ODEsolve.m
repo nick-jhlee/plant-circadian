@@ -16,12 +16,12 @@ prr3p=[0 3 6 9 12 15 18 21 24; ...
 
 init_gi =  0.237939;
 init_prr3 =  0.021049;
-d_G = 0.89;
-d_P = 0.9;
+d_G = 0.76;
+d_P = 1.1;
 %time interval and initial condition
 
 
-t_interval = [24 48];
+t_interval = [0 24]+24*2;
 init_cond = [init_gi init_prr3];
 %solution
 [t,y] = ode45(@(t,y) odefcn(t,y,d_G,d_P) , t_interval , init_cond);
@@ -29,6 +29,6 @@ init_cond = [init_gi init_prr3];
 %plot(t,y(:,1),'b',t,y(:,2),'r');
 plot(t,y(:,1),'b',t,y(:,2),'r');
 hold on;
-plot(gip(1,:),gip(2,:),'.', 'MarkerSize',20);
-plot(prr3p(1,:),prr3p(2,:),'.','MarkerSize',20);
+plot(gip(1,:)+24*2,gip(2,:),'.', 'MarkerSize',20);
+plot(prr3p(1,:)+24*2,prr3p(2,:),'.','MarkerSize',15);
 hold off
