@@ -54,15 +54,15 @@ def mPRR3(t):
 ### Define ODE right hand side ###
 def r(y, t, p):
     #    Ttil, Gtil, Zdtil, Ptil = y
-    Gtil, Ptil = y
+    Ttil, Ztil = y
     #    d_t, d_G, d_zd, d_P = p
-    d_G, d_P = p
+    d_T, d_Z = p
     #    dTtil_dt =  mTOC1(t) -d_t* Ttil
-    dGtil_dt = mGI(t) - d_G * Gtil
+    dTtil_dt = mTOC1(t) - d_T * Ttil
     #    dZdtil_dt = 1 - d_zd * Zdtil
-    dPtil_dt = mPRR3(t) - d_P * Ptil
+    dZtil_dt = 1 - d_Z * Ztil
     #    return dTtil_dt, dGtil_dt, dZdtil_dt, dPtil_dt
-    return dGtil_dt, dPtil_dt
+    return dTtil_dt, dZtil_dt
 
 
 ### Define generative model ###
@@ -72,10 +72,10 @@ class PlantModel(PyroModule):
         self._ode_op = ode_op
         self._ode_model = ode_model
         # TODO: Incorporate appropriate priors (cf. MATALB codes from Daewook)
-        self.ode_params1 = PyroSample(dist.Gamma(1, 1000))  # dG
-        self.ode_params2 = PyroSample(dist.Gamma(1, 1000))  # dP
-        self.ode_params3 = PyroSample(dist.Beta(0.5, 0.5))  # G0
-        self.ode_params4 = PyroSample(dist.Beta(0.5, 0.5))  # P0
+        self.ode_params1 = PyroSample(dist.Gamma(1, 1000))  # dT
+        self.ode_params2 = PyroSample(dist.Gamma(1, 1000))  # dZ
+   #     self.ode_params3 = PyroSample(dist.Beta(0.5, 0.5))  # T0
+   #     self.ode_params4 = PyroSample(dist.Beta(0.5, 0.5))  # Z0
 
     #        self.ode_params3 = PyroSample(dist.Gamma(2,1))
     #        self.ode_params4 = PyroSample(dist.Gamma(2,1))
@@ -155,27 +155,24 @@ if __name__ == '__main__':
     rhs_f, jac_x_f, jac_p_f = prepare_symbolic_plant(_rhs, _y, _p, _t)
 
     ### Input experimental data ###
-    times = np.array([0, 3, 6, 9, 12, 15, 18, 21, 24]) + (init_days * 24)
+    times = np.array([1, 5, 9, 13, 17, 21]) + (init_days * 24),
     data = np.array([
-        [0.237939, 0.021049],  # 0 + init_days * 24
-        [0.0842713, 0.0711328],  # 3 + init_days * 24
-        [0.365812, 0.128753],  # 6 + init_days * 24
-        [0.913379, 0.574524],  # 9 + init_days * 24
-        [1., 1.],  # 12 + init_days * 24
-        [0.425148, 0.587505],  # 15 + init_days * 24
-        [0.208709, 0.371859],  # 18 + init_days * 24
-        [0.0937085, 0.355726],  # 21 + init_days * 24
-        [0.096325, 0.104436],  # 24 + init_days * 24
+        [0.0649, 0.115],  # 1 + init_days * 24
+        [0.0346, 0.187],  # 5 + init_days * 24
+        [0.29, 0.445],  # 9 + init_days * 24
+        [0.987, 1.],  # 13 + init_days * 24
+        [1., 0.718],  # 17 + init_days * 24
+        [0.645, 0.56],  # 21 + init_days * 24
     ])
-    Gtil, Ptil = data[:, 0], data[:, 1]
+    Ttil, Ztil = data[:, 0], data[:, 1]
     Y = data
 
     ### Run inference ###
-    param_names = [r"$d_G$", r"$d_P$"]
+    param_names = [r"$d_T$", r"$d_Z$"]
     if not args.adjoint:
         print('Using VJP by Forward Sensitivity')
         plant_ode_model = ForwardSensManualJacobians(rhs_f, jac_x_f, jac_p_f, 2, 2,
-                                                     times, 1e-5, 1e-6, [0.237939, 0.021049])
+                                                     times, 1e-5, 1e-6, [0.0649, 0.115])
 
         # plant_ode_model.set_unknown_y0()
         # method = 'NUTS'
@@ -201,7 +198,7 @@ if __name__ == '__main__':
     else:
         print('Using VJP by Adjoint Sensitivity')
         plant_ode_model = AdjointSensManualJacobians(rhs_f, jac_x_f, jac_p_f, 2, 2,
-                                                     times, 1e-5, 1e-6, [0.237939, 0.021049])
+                                                     times, 1e-5, 1e-6, [0.0649, 0.115])
 
         # plant_ode_model.set_unknown_y0()
         # method = 'NUTS'
