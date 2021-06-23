@@ -24,20 +24,34 @@ d_T = 1.73117887973785;
 d_Z = 0.942879080772399;
 d_G = 0.853;
 d_P = 0.819;
-init_days = 2;
+init_days = 1;
 %time interval and initial condition
+
+t_t= 0.219245672225952;
+k_f= 0.000433455483289435;
+k_tZd= 0.0628891140222549;
+k_tZl= 0.0479271076619625 ;
+d_t= 0.166771158576011;
+t_z= 0.0685206800699234;
+d_Zd= 0.0624408535659313;
+k_l= 0.0661178082227706;
+k_d= 0.000231168189202435;
+d_Zl= 0.000217855456867255;
+d_tZd= 0.0611847192049026;
+d_tZl = 0.0643908753991127 ;
 
 
 t_interval = [0 72];
 %t_interval = [0 24]+24*init_days;
-init_cond = [init_toc1 init_ztlp];
+init_cond = [init_toc1 init_ztlp 0 0 0];
 %solution
 %[t,y] = ode45(@(t,y) odefcn(t,y,d_G,d_P) , t_interval , init_cond);
-[t,y] = ode45(@(t,y) odefcn2(t,y,d_T,d_Z) , t_interval , init_cond);
+%[t,y] = ode45(@(t,y) odefcn2(t,y,d_T,d_Z) , t_interval , init_cond);
+[t,y] = ode45(@(t,y) odefcn3(t,y,t_t, k_f, k_tZd, k_tZl, d_t, t_z, d_Zd, k_l, k_d, d_Zl, d_tZd, d_tZl) , t_interval , init_cond);
 %plot
 plot(t,y(:,1),'b',t,y(:,2),'r');
 plot(t,y(:,1),'b',t,y(:,2),'r');
 hold on;
 plot(toc1p(1,:)+24*init_days,toc1p(2,:),'b.', 'MarkerSize', 30);
 plot(ztlp(1,:)+24*init_days,ztlp(2,:),'r.','MarkerSize', 30);
-hold off
+%hold off
