@@ -136,8 +136,8 @@ if __name__ == '__main__':
         sir_ode_model = ForwardSensManualJacobians(rhs_f, jac_x_f, jac_p_f, 3, 5, \
                                                    times, 1e-5, 1e-6, [0.9, 0.1, 0.0])
         sir_ode_model.set_unknown_y0()
-        # method = 'NUTS'
-        # NUTS_samples = run_inference(Y, SIRGenModel, sir_ode_model, method, \
+        # method = 'NUTS'# NUTS_samples = run_inference(Y, SIRGenModel, sir_ode_model, method, \
+
         #     iterations = args.num_samples, warmup_steps = args.warmup_steps)
         # mc_params=np.concatenate((NUTS_samples['ode_params1'][:,None],
         #                     NUTS_samples['ode_params2'][:,None],
