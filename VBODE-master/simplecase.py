@@ -74,11 +74,10 @@ class PlantModel(PyroModule):
         # TODO: Incorporate appropriate priors (cf. MATALB codes from Daewook)
         self.ode_params1 = PyroSample(dist.Gamma(1, 1000))  # dG
         self.ode_params2 = PyroSample(dist.Gamma(1, 1000))  # dP
-        self.ode_params3 = PyroSample(dist.Beta(0.5, 0.5))  # G0
-        self.ode_params4 = PyroSample(dist.Beta(0.5, 0.5))  # P0
-
-    #        self.ode_params3 = PyroSample(dist.Gamma(2,1))
-    #        self.ode_params4 = PyroSample(dist.Gamma(2,1))
+        # self.ode_params3 = PyroSample(dist.Beta(0.5, 0.5))  # G0
+        # self.ode_params4 = PyroSample(dist.Beta(0.5, 0.5))  # P0
+        # self.ode_params3 = PyroSample(dist.Gamma(2,1))
+        # self.ode_params4 = PyroSample(dist.Gamma(2,1))
 
     def forward(self, data):
         scale = pyro.sample("scale", dist.HalfNormal(0.001))

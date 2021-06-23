@@ -16,7 +16,7 @@ from ode_systems.forward_sensitivity_solvers import ForwardSensManualJacobians
 from ode_systems.adjoint_sensitivity_solvers import AdjointSensManualJacobians
 from sympy import interpolating_spline
 
-init_days = 2
+init_days = 1
 
 
 def extend_time(times_init):
@@ -72,8 +72,8 @@ class PlantModel(PyroModule):
         self._ode_op = ode_op
         self._ode_model = ode_model
         # TODO: Incorporate appropriate priors (cf. MATALB codes from Daewook)
-        self.ode_params1 = PyroSample(dist.Gamma(1, 1000))  # dT
-        self.ode_params2 = PyroSample(dist.Gamma(1, 1000))  # dZ
+        self.ode_params1 = PyroSample(dist.Gamma(1, 2))  # dT
+        self.ode_params2 = PyroSample(dist.Gamma(1, 2))  # dZ
    #     self.ode_params3 = PyroSample(dist.Beta(0.5, 0.5))  # T0
    #     self.ode_params4 = PyroSample(dist.Beta(0.5, 0.5))  # Z0
 
@@ -155,7 +155,7 @@ if __name__ == '__main__':
     rhs_f, jac_x_f, jac_p_f = prepare_symbolic_plant(_rhs, _y, _p, _t)
 
     ### Input experimental data ###
-    times = np.array([1, 5, 9, 13, 17, 21]) + (init_days * 24),
+    times = np.array([1, 5, 9, 13, 17, 21]) + (init_days * 24)
     data = np.array([
         [0.0649, 0.115],  # 1 + init_days * 24
         [0.0346, 0.187],  # 5 + init_days * 24

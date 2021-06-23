@@ -39,5 +39,5 @@ plot(t,y(:,1),'b',t,y(:,2),'r');
 plot(t,y(:,1),'b',t,y(:,2),'r');
 hold on;
 plot(toc1p(1,:)+24*init_days,toc1p(2,:),'b.', 'MarkerSize', 30);
-plot(ztlp(1,:)+24*init_days,ztlp(2,:),'r.','MarkerSize', 30);
+plot(p(1,:)+24*init_days,prr3p(2,:),'r.','MarkerSize', 30);
 hold off
