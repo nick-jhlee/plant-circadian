@@ -77,7 +77,7 @@ def r(y, t, p):
     # ODE model
     dT_dt = t_t * mTOC1(t) - k_f * (T * Zd + T * Zl) + k_tZd * TZd + k_tZl * TZl - d_t * T
 
-    dZtot_dt = k_l * light(t) * Zd - k_d * (1 - light(t)) * Zl - k_f * T * Zl - k_tZl * TZl - d_Zl * Zl + t_z - k_f * T * Zd + k_tZd * TZd - d_Zd * Zd - k_l * light(t) * Zd + k_d * (1 - light(t)) * Zl
+    dZtot_dt = - k_f * T * Ztot - k_tZl * TZl - d_Zl * Zl + t_z + k_tZd * TZd - d_Zd * Zd
 
     dZd_dt = t_z - k_f * T * Zd + k_tZd * TZd - d_Zd * Zd - k_l * light(t) * Zd + k_d * (1 - light(t)) * Zl
 
@@ -95,18 +95,18 @@ class PlantModel(PyroModule):
         self._ode_op = ode_op
         self._ode_model = ode_model
         # TODO: Incorporate appropriate priors
-        self.ode_params1 = PyroSample(dist.Gamma(1, 1e-6))  # t_t
-        self.ode_params2 = PyroSample(dist.Gamma(1, 1e-6))  # k_f
-        self.ode_params3 = PyroSample(dist.Gamma(1, 1e-6))  # k_tZd
-        self.ode_params4 = PyroSample(dist.Gamma(1, 1e-6))  # k_tZl
-        self.ode_params5 = PyroSample(dist.Gamma(1, 1e-6))  # d_t
-        self.ode_params6 = PyroSample(dist.Gamma(1, 1e-6))  # t_z
-        self.ode_params7 = PyroSample(dist.Gamma(1, 1e-6))  # d_Zd
-        self.ode_params8 = PyroSample(dist.Gamma(1, 1e-6))  # k_l
-        self.ode_params9 = PyroSample(dist.Gamma(1, 1e-6))  # k_d
-        self.ode_params10 = PyroSample(dist.Gamma(1, 1e-6))  # d_Zl
-        self.ode_params11 = PyroSample(dist.Gamma(1, 1e-6))  # d_tZd
-        self.ode_params12 = PyroSample(dist.Gamma(1, 1e-6))  # d_tZl
+        self.ode_params1 = PyroSample(dist.Gamma(1, 1e-1))  # t_t
+        self.ode_params2 = PyroSample(dist.Gamma(1, 1e-1))  # k_f
+        self.ode_params3 = PyroSample(dist.Gamma(1, 1e-1))  # k_tZd
+        self.ode_params4 = PyroSample(dist.Gamma(1, 1e-1))  # k_tZl
+        self.ode_params5 = PyroSample(dist.Gamma(1, 1e-1))  # d_t
+        self.ode_params6 = PyroSample(dist.Gamma(1, 1e-1))  # t_z
+        self.ode_params7 = PyroSample(dist.Gamma(1, 1e-1))  # d_Zd
+        self.ode_params8 = PyroSample(dist.Gamma(1, 1e-1))  # k_l
+        self.ode_params9 = PyroSample(dist.Gamma(1, 1e-1))  # k_d
+        self.ode_params10 = PyroSample(dist.Gamma(1, 1e-1))  # d_Zl
+        self.ode_params11 = PyroSample(dist.Gamma(1, 1e-1))  # d_tZd
+        self.ode_params12 = PyroSample(dist.Gamma(1, 1e-1))  # d_tZl
 
     def forward(self, data):
         scale = pyro.sample("scale", dist.HalfNormal(0.001))
@@ -224,7 +224,7 @@ if __name__ == '__main__':
         #                     ),axis=1)
 
         method = 'VI'
-        lr = 0.1
+        lr = 0.5
         num_particles = 1
         vb_samples = run_inference(Y, PlantModel, plant_ode_model, method,
                                    iterations=args.iterations, num_samples=args.num_qsamples,
@@ -264,7 +264,7 @@ if __name__ == '__main__':
         #                     ),axis=1)
 
         method = 'VI'
-        lr = 0.5
+        lr = 0.2
         num_particles = 1
         vb_samples = run_inference(Y, PlantModel, plant_ode_model, method,
                                    iterations=args.iterations, num_samples=args.num_qsamples,

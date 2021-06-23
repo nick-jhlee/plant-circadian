@@ -40,7 +40,7 @@ class AdjointSensManualJacobians(object):
       return self._rhs(y, t, p)
 
   def _jac_x_ivp(self, t, y, p):
-    return self._jac_x(y, p)
+    return self._jac_x(y, t, p)
           
   def solve(self, parameters):
     return self._solve(parameters, None, None, None, False)
@@ -56,8 +56,8 @@ class AdjointSensManualJacobians(object):
         adj = aug_state[:self._n_states]
         y = interpolation.sol(t)    
                    
-        jac_p = self._jac_p(y, p)
-        jac_x = self._jac_x(y, p)
+        jac_p = self._jac_p(y, t, p)
+        jac_x = self._jac_x(y, t, p)
         dL_y = np.dot(-adj, jac_x)
         dL_p = np.dot(-adj, jac_p)  
         return np.hstack((dL_y, dL_p))
