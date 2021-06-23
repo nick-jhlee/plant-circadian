@@ -5,7 +5,7 @@ sym.init_printing(use_latex='matplotlib')
 import time as timer
 import torch
 import pyro
-from pyro.infer.autoguide import AutoMultivariateNormal
+from pyro.infer.autoguide import AutoMultivariateNormal, AutoDiagonalNormal
 import pyro.poutine as poutine
 from pyro.infer import SVI, Trace_ELBO, Predictive
 from pyro.optim import AdagradRMSProp
@@ -38,8 +38,8 @@ def prepare_symbolic_plant(rhs, y, p, t=None):
     rhs_f = sym.lambdify((y, t, p), ydot)
     jac_x = sym.Matrix(ydot).jacobian(y)
     jac_p = sym.Matrix(ydot).jacobian(p)
-    jac_x_f = sym.lambdify((y, p), jac_x)
-    jac_p_f = sym.lambdify((y, p), jac_p)
+    jac_x_f = sym.lambdify((y, t, p), jac_x)
+    jac_p_f = sym.lambdify((y, t, p), jac_p)
     print('\n\n The velocity field df/dt : \n\n', ydot)
     print('\n\n Jacobian of the velocity wrt X(t), df/d X: \n\n', jac_x)
     print('\n\n Jacobian of the velocity wrt theta, df/d theta: \n\n', jac_p)
@@ -62,6 +62,7 @@ def run_inference(data, gen_model, ode_model, method, iterations=10000, num_part
     pyro.clear_param_store()
     if method == 'VI':
 
+        # guide = AutoDiagonalNormal(model, init_scale=init_scale)
         guide = AutoMultivariateNormal(model, init_scale=init_scale)
         optim = AdagradRMSProp({"eta": lr})
         if num_particles == 1:

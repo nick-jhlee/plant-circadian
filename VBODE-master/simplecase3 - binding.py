@@ -61,29 +61,32 @@ def l_24(t, t_init):
     )
 
 
-def l(t):
-    result = l_24(t, 0)
-    for i in range(1, init_days):
-        result += l_24(t, 24 * i)
-    return result
+def light(t):
+    return 0
+    # result = l_24(t, 0)
+    # for i in range(1, init_days):
+    #     result += l_24(t, 24 * i)
+    # return result
 
 
 ### Define ODE right hand side ###
 def r(y, t, p):
-    T, Zd, Zl, TZd, TZl = y  # 5
+    # Obtain states and parameters
+    T, Zl, Zd, TZd, TZl = y  # 5
     t_t, k_f, k_tZd, k_tZl, d_t, t_z, d_Zd, k_l, k_d, d_Zl, d_tZd, d_tZl = p  # 12
 
+    # ODE model
     dT_dt = t_t * mTOC1(t) - k_f * (T * Zd + T * Zl) + k_tZd * TZd + k_tZl * TZl - d_t * T
 
-    dZd_dt = t_z - k_f * T * Zd + k_tZd * TZd - d_Zd * Zd - k_l * l(t) * Zd + k_d * (1 - l(t)) * Zl
+    dZd_dt = t_z - k_f * T * Zd + k_tZd * TZd - d_Zd * Zd - k_l * light(t) * Zd + k_d * (1 - light(t)) * Zl
 
-    dZl_dt = k_l * l(t) * Zd - k_d * (1 - l(t)) * Zl - k_f * T * Zl - k_tZl * TZl - d_Zl * Zl
+    dZl_dt = k_l * light(t) * Zd - k_d * (1 - light(t)) * Zl - k_f * T * Zl - k_tZl * TZl - d_Zl * Zl
 
     dTZd_dt = k_f * T * Zd - k_tZd * TZd - d_tZd * TZd
 
     dTZl_dt = k_f * T * Zl - k_tZl * TZl - d_tZl * TZl
 
-    return dT_dt, dZd_dt, dZl_dt, dTZd_dt, dTZl_dt
+    return dT_dt, dZl_dt, dZd_dt, dTZd_dt, dTZl_dt
 
 
 ### Define generative model ###
@@ -93,18 +96,18 @@ class PlantModel(PyroModule):
         self._ode_op = ode_op
         self._ode_model = ode_model
         # TODO: Incorporate appropriate priors (cf. MATALB codes from Daewook)
-        self.ode_params1 = PyroSample(dist.Gamma(1, 2))  # t_t
-        self.ode_params2 = PyroSample(dist.Gamma(1, 2))  # k_f
-        self.ode_params3 = PyroSample(dist.Gamma(1, 2))  # k_tZd
-        self.ode_params4 = PyroSample(dist.Gamma(1, 2))  # k_tZl
-        self.ode_params5 = PyroSample(dist.Gamma(1, 2))  # d_t
-        self.ode_params6 = PyroSample(dist.Gamma(1, 2))  # t_z
-        self.ode_params7 = PyroSample(dist.Gamma(1, 2))  # d_Zd
-        self.ode_params8 = PyroSample(dist.Gamma(1, 2))  # k_l
-        self.ode_params9 = PyroSample(dist.Gamma(1, 2))  # k_d
-        self.ode_params10 = PyroSample(dist.Gamma(1, 2))  # d_Zl
-        self.ode_params11 = PyroSample(dist.Gamma(1, 2))  # d_tZd
-        self.ode_params12 = PyroSample(dist.Gamma(1, 2))  # d_tZl
+        self.ode_params1 = PyroSample(dist.Gamma(1, 10))  # t_t
+        self.ode_params2 = PyroSample(dist.Gamma(1, 10))  # k_f
+        self.ode_params3 = PyroSample(dist.Gamma(1, 10))  # k_tZd
+        self.ode_params4 = PyroSample(dist.Gamma(1, 10))  # k_tZl
+        self.ode_params5 = PyroSample(dist.Gamma(1, 10))  # d_t
+        self.ode_params6 = PyroSample(dist.Gamma(1, 10))  # t_z
+        self.ode_params7 = PyroSample(dist.Gamma(1, 10))  # d_Zd
+        self.ode_params8 = PyroSample(dist.Gamma(1, 10))  # k_l
+        self.ode_params9 = PyroSample(dist.Gamma(1, 10))  # k_d
+        self.ode_params10 = PyroSample(dist.Gamma(1, 10))  # d_Zl
+        self.ode_params11 = PyroSample(dist.Gamma(1, 10))  # d_tZd
+        self.ode_params12 = PyroSample(dist.Gamma(1, 10))  # d_tZl
 
     def forward(self, data):
         scale = pyro.sample("scale", dist.HalfNormal(0.001))
@@ -112,16 +115,16 @@ class PlantModel(PyroModule):
         # print("sd: ", sd)
         p1 = self.ode_params1.view((-1,))
         p2 = self.ode_params2.view((-1,))
-        p3 = self.ode_params1.view((-1,))
-        p4 = self.ode_params2.view((-1,))
-        p5 = self.ode_params1.view((-1,))
-        p6 = self.ode_params2.view((-1,))
-        p7 = self.ode_params1.view((-1,))
-        p8 = self.ode_params2.view((-1,))
-        p9 = self.ode_params1.view((-1,))
-        p10 = self.ode_params2.view((-1,))
-        p11 = self.ode_params1.view((-1,))
-        p12 = self.ode_params2.view((-1,))
+        p3 = self.ode_params3.view((-1,))
+        p4 = self.ode_params4.view((-1,))
+        p5 = self.ode_params5.view((-1,))
+        p6 = self.ode_params6.view((-1,))
+        p7 = self.ode_params7.view((-1,))
+        p8 = self.ode_params8.view((-1,))
+        p9 = self.ode_params9.view((-1,))
+        p10 = self.ode_params10.view((-1,))
+        p11 = self.ode_params11.view((-1,))
+        p12 = self.ode_params12.view((-1,))
         ode_params = torch.stack([p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11, p12], dim=1)
         simple_sim = self._ode_op.apply(ode_params, (self._ode_model,))
 
@@ -129,10 +132,11 @@ class PlantModel(PyroModule):
             try:
                 # TODO: Which distribution to use?
                 # pyro.sample("obs_{}".format(i), dist.Exponential(simple_sim[..., i, 0]), obs=data[i])
-                pyro.sample("obs_{}".format(i), dist.Normal(loc=simple_sim[..., i, :], scale=sd).to_event(1),
+                # print(i, simple_sim[..., i, 0:2], '\n')
+                pyro.sample("obs_{}".format(i), dist.Normal(loc=simple_sim[..., i, 0:2], scale=sd).to_event(2),
                             obs=data[i, :])
-            except:
-                print(simple_sim[..., i, :])
+            except ValueError:
+                print(simple_sim[..., i, 0:2])
                 print("ERROR (invalid parameter for Normal...!): ")
         return simple_sim
 
@@ -186,7 +190,6 @@ if __name__ == '__main__':
     ### Generate the symbolic system ###z
     _rhs = r
     _y, _p = sym.symbols('y:5'), sym.symbols('p:12')
-    # TODO : input _t
     _t = sym.symbols('t')
     rhs_f, jac_x_f, jac_p_f = prepare_symbolic_plant(_rhs, _y, _p, _t)
 
@@ -210,7 +213,7 @@ if __name__ == '__main__':
         print('Using VJP by Forward Sensitivity')
         plant_ode_model = ForwardSensManualJacobians(rhs_f, jac_x_f, jac_p_f, 5, 12,
                                                      times, 1e-5, 1e-6,
-                                                     [0.0649, 0.0, 0.115, 0.0, 0.0])  # T, Zd, Zl, TZd, TZl = y
+                                                     [0.0649, 0.115, 0.0, 0.0, 0.0])  # T, Zd, Zl, TZd, TZl = y
 
         # plant_ode_model.set_unknown_y0()
         # method = 'NUTS'
@@ -222,7 +225,7 @@ if __name__ == '__main__':
         #                     ),axis=1)
 
         method = 'VI'
-        lr = 0.5
+        lr = 0.1
         num_particles = 1
         vb_samples = run_inference(Y, PlantModel, plant_ode_model, method,
                                    iterations=args.iterations, num_samples=args.num_qsamples,
@@ -250,7 +253,7 @@ if __name__ == '__main__':
         print('Using VJP by Adjoint Sensitivity')
         plant_ode_model = AdjointSensManualJacobians(rhs_f, jac_x_f, jac_p_f, 5, 12,
                                                      times, 1e-5, 1e-6,
-                                                     [0.0649, 0.0, 0.115, 0.0, 0.0])  # T, Zd, Zl, TZd, TZl = y
+                                                     [0.0649, 0.115, 0.0, 0.0, 0.0])  # T, Zd, Zl, TZd, TZl = y
 
         # plant_ode_model.set_unknown_y0()
         # method = 'NUTS'

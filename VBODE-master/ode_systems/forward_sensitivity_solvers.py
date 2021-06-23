@@ -54,7 +54,7 @@ class ForwardSensManualJacobians(object):
                     self._n_states, self._n_params))
 
                 dydt = self._rhs(y, t, p)
-                d_dydp_dt = np.matmul(self._jac_x(y, p), dydp) + self._jac_p(y, p)
+                d_dydp_dt = np.matmul(self._jac_x(y, t, p), dydp) + self._jac_p(y, t, p)
                 return np.concatenate((dydt, d_dydp_dt.reshape(-1)))
 
             y0 = np.zeros(self._n_states + (self._n_states * self._n_params))
