@@ -16,8 +16,8 @@ prr3p=[0 3 6 9 12 15 18 21 24; ...
 
 init_gi =  0.237939;
 init_prr3 =  0.021049;
-init_toc1 = 0.0649;
-init_ztlp =  0.115;
+init_toc1 = 0;
+init_ztlp =  0;     
 % init_gi =  0.222;
 % init_prr3 =  0.0167;
 d_T = 1.73117887973785;
@@ -26,20 +26,33 @@ d_G = 0.853;
 d_P = 0.819;
 init_days = 1;
 %time interval and initial condition
+% 
+% t_t= 0.727;
+% k_f= 16.3;
+% k_tZd= 4.44;
+% k_tZl=4.64;
+% d_t= 0.50613;
+% t_z= 13.07508;
+% d_Zd= 17.76;
+% k_l= 4.78;
+% k_d= 2.10955;
+% d_Zl= 3.23;
+% d_tZd= 0.00793;
+% d_tZl = 5.16;
 
-t_t=1.14674508571624;
-k_f= 16.6260776519775;
-k_tZd= 2.36779260635375;
-k_tZl=5.96247816085815 ;
-d_t= 0.780851244926452;
-t_z= 7.44255399703979;
-d_Zd= 12.4009571075439;
-k_l= 5.99422073364257;
-k_d=5.49226331710815;
-d_Zl= 5.93473243713378;
-d_tZd= 0.0119232218712568;
-d_tZl = 6.3666033744812;
 
+t_t= 50.46;
+k_f= 17.5;
+k_tZd= 70;
+k_tZl=53;
+d_t= 53.5;
+t_z= 60.4;
+d_Zd= 103.4;
+k_l= 43.9;
+k_d= 37.1;
+d_Zl= 48.4;
+d_tZd=11.2;
+d_tZl =43.4;
 
 t_interval = [0 72];
 %t_interval = [0 24]+24*init_days;
@@ -48,7 +61,7 @@ init_cond = [init_toc1 init_ztlp 0 0 0];
 %[t,y] = ode45(@(t,y) odefcn(t,y,d_G,d_P) , t_interval , init_cond);
 %[t,y] = ode45(@(t,y) odefcn2(t,y,d_T,d_Z) , t_interval , init_cond);
 [t,y] = ode45(@(t,y) odefcn3(t,y,t_t, k_f, k_tZd, k_tZl, d_t, t_z, d_Zd, k_l, k_d, d_Zl, d_tZd, d_tZl) , t_interval , init_cond);
-%plot
+figure(2)
 plot(t,y(:,1),'b',t,y(:,2),'r');
 hold on;
 plot(toc1p(1,:)+24*init_days,toc1p(2,:),'b.', 'MarkerSize', 20);

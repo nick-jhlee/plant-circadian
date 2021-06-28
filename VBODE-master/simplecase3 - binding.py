@@ -17,7 +17,7 @@ from ode_systems.adjoint_sensitivity_solvers import AdjointSensManualJacobians
 from sympy import interpolating_spline
 from sympy import Piecewise
 
-init_days = 1
+init_days = 2
 
 
 def extend_time(times_init):
@@ -56,8 +56,7 @@ def l_24(t, t_init):
     return Piecewise(
         (0, (t <= t_init)),
         (1, (t > t_init) & (t <= t_init + 12)),
-        (0, (t > t_init + 12) & (t <= t_init + 24)),
-        (0, (t > t_init + 24))
+        (0, (t > t_init + 12) )
     )
 
 
@@ -73,17 +72,16 @@ def r(y, t, p):
     # Obtain states and parameters
     T, Ztot, Zd, TZd, TZl = y  # 5
     t_t, k_f, k_tZd, k_tZl, d_t, t_z, d_Zd, k_l, k_d, d_Zl, d_tZd, d_tZl = p  # 12
-    Zl = Ztot - Zd
     # ODE model
-    dT_dt = t_t * mTOC1(t) - k_f * (T * Zd + T * Zl) + k_tZd * TZd + k_tZl * TZl - d_t * T
+    dT_dt = t_t * mTOC1(t) - k_f * T * Ztot + k_tZd * TZd + k_tZl * TZl - d_t * T
 
-    dZtot_dt = - k_f * T * Ztot - k_tZl * TZl - d_Zl * Zl + t_z + k_tZd * TZd - d_Zd * Zd
+    dZtot_dt = t_z - k_f * T * Ztot + k_tZl * TZl - d_Zl * (Ztot - Zd)  + k_tZd * TZd - d_Zd * Zd
 
-    dZd_dt = t_z - k_f * T * Zd + k_tZd * TZd - d_Zd * Zd - k_l * light(t) * Zd + k_d * (1 - light(t)) * Zl
+    dZd_dt = t_z - k_f * T * Zd + k_tZd * TZd - d_Zd * Zd - k_l * light(t) * Zd + k_d * (1 - light(t)) * (Ztot - Zd)
 
     dTZd_dt = k_f * T * Zd - k_tZd * TZd - d_tZd * TZd
 
-    dTZl_dt = k_f * T * Zl - k_tZl * TZl - d_tZl * TZl
+    dTZl_dt = k_f * T * (Ztot - Zd) - k_tZl * TZl - d_tZl * TZl
 
     return dT_dt, dZtot_dt, dZd_dt, dTZd_dt, dTZl_dt
 
@@ -95,18 +93,20 @@ class PlantModel(PyroModule):
         self._ode_op = ode_op
         self._ode_model = ode_model
         # TODO: Incorporate appropriate priors
-        self.ode_params1 = PyroSample(dist.Gamma(1, 1e-1))  # t_t
-        self.ode_params2 = PyroSample(dist.Gamma(1, 1e-1))  # k_f
-        self.ode_params3 = PyroSample(dist.Gamma(1, 1e-1))  # k_tZd
-        self.ode_params4 = PyroSample(dist.Gamma(1, 1e-1))  # k_tZl
-        self.ode_params5 = PyroSample(dist.Gamma(1, 1e-1))  # d_t
-        self.ode_params6 = PyroSample(dist.Gamma(1, 1e-1))  # t_z
-        self.ode_params7 = PyroSample(dist.Gamma(1, 1e-1))  # d_Zd
-        self.ode_params8 = PyroSample(dist.Gamma(1, 1e-1))  # k_l
-        self.ode_params9 = PyroSample(dist.Gamma(1, 1e-1))  # k_d
-        self.ode_params10 = PyroSample(dist.Gamma(1, 1e-1))  # d_Zl
-        self.ode_params11 = PyroSample(dist.Gamma(1, 1e-1))  # d_tZd
-        self.ode_params12 = PyroSample(dist.Gamma(1, 1e-1))  # d_tZl
+        self.ode_params1 = PyroSample(dist.Gamma(1, 1e-2))  # t_t
+        self.ode_params2 = PyroSample(dist.Gamma(1, 1e-2))  # k_f
+        self.ode_params3 = PyroSample(dist.Gamma(1, 1e-2))  # k_tZd
+        self.ode_params4 = PyroSample(dist.Gamma(1, 1e-2))  # k_tZl
+#        self.ode_params3 = PyroSample(dist.Uniform(0, 1000))  # k_tZd
+#        self.ode_params4 = PyroSample(dist.Uniform(0,1000))  # k_tZl
+        self.ode_params5 = PyroSample(dist.Gamma(1, 1e-2))  # d_t
+        self.ode_params6 = PyroSample(dist.Gamma(1, 1e-2))  # t_z
+        self.ode_params7 = PyroSample(dist.Gamma(1, 1e-2))  # d_Zd
+        self.ode_params8 = PyroSample(dist.Gamma(1, 1e-2))  # k_l
+        self.ode_params9 = PyroSample(dist.Gamma(1, 1e-2))  # k_d
+        self.ode_params10 = PyroSample(dist.Gamma(1, 1e-2))  # d_Zl
+        self.ode_params11 = PyroSample(dist.Gamma(1, 1e-2))  # d_tZd
+        self.ode_params12 = PyroSample(dist.Gamma(1, 1e-2))  # d_tZl
 
     def forward(self, data):
         scale = pyro.sample("scale", dist.HalfNormal(0.001))
