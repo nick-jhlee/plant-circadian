@@ -62,7 +62,7 @@ def run_inference(data, gen_model, ode_model, method, iterations=10000, num_part
     pyro.clear_param_store()
     if method == 'VI':
 
-        # guide = AutoDiagonalNormal(model, init_scale=init_scale)
+         # guide = AutoDiagonalNormal(model, init_scale=init_scale)
         guide = AutoMultivariateNormal(model, init_scale=init_scale)
         optim = AdagradRMSProp({"eta": lr})
         if num_particles == 1:
