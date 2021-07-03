@@ -1,0 +1,9 @@
+prefix=/Users/nicklee/Google Drive/Research (BIMAG)/plant-circadian/magi-master/package/eigen-3.3.9/install_dir
+exec_prefix=${prefix}
+
+Name: Eigen3
+Description: A C++ template library for linear algebra: vectors, matrices, and related algorithms
+Requires:
+Version: 3.3.9
+Libs:
+Cflags: -I${prefix}/include/eigen3
