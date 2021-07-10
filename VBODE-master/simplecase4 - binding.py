@@ -1,5 +1,7 @@
 import numpy as np
 import sympy as sym
+import os
+import time
 
 sym.init_printing(use_latex='matplotlib')
 import torch
@@ -11,7 +13,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import pickle
 import argparse
-from inference.inference import prepare_symbolic_plant, run_inference
+from inference.inference import prepare_symbolic_plant, run_inference, plot_marginals_vb
 from ode_systems.forward_sensitivity_solvers import ForwardSensManualJacobians
 from ode_systems.adjoint_sensitivity_solvers import AdjointSensManualJacobians
 from sympy import interpolating_spline
@@ -56,7 +58,7 @@ def l_24(t, t_init):
     return Piecewise(
         (0, (t <= t_init)),
         (1, (t > t_init) & (t <= t_init + 12)),
-        (0, (t > t_init + 12) )
+        (0, (t > t_init + 12))
     )
 
 
@@ -98,11 +100,11 @@ class PlantModel(PyroModule):
         self._ode_model = ode_model
         # TODO: Incorporate appropriate priors
         self.ode_params1 = PyroSample(dist.Uniform(0, 1000))  # t_t
-        self.ode_params2 = PyroSample(dist.Uniform(0, 1000))   # k_f
+        self.ode_params2 = PyroSample(dist.Uniform(0, 1000))  # k_f
         self.ode_params3 = PyroSample(dist.Uniform(0, 1000))  # k_tZd
         self.ode_params4 = PyroSample(dist.Uniform(0, 1000))  # k_tZl
-#        self.ode_params3 = PyroSample(dist.Uniform(0, 1000))  # k_tZd
-#        self.ode_params4 = PyroSample(dist.Uniform(0,1000))  # k_tZl
+        #        self.ode_params3 = PyroSample(dist.Uniform(0, 1000))  # k_tZd
+        #        self.ode_params4 = PyroSample(dist.Uniform(0,1000))  # k_tZl
         self.ode_params5 = PyroSample(dist.Uniform(0, 1000))  # d_t
         self.ode_params6 = PyroSample(dist.Uniform(0, 1000))  # t_z
         self.ode_params7 = PyroSample(dist.Uniform(0, 1000))  # d_Zd
@@ -173,6 +175,7 @@ def plot_marginals(vb_params, mc_params, param_names, real_params=None, rows=4):
     plt.close()
 
 
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(
         description='Fit Protein Transduction model')
@@ -186,9 +189,18 @@ if __name__ == '__main__':
                         help='number of NUTS post warm-up samples')
     parser.add_argument('--warmup_steps', type=int, default=500, metavar='N',
                         help='number of NUTS warmup_steps')
+    parser.add_argument('--param_freq', type=int, default=500, metavar='N',
+                        help='frequency of saving parameter')
+    parser.add_argument('--plot_freq', type=int, default=1000, metavar='N',
+                        help='frequency of saving parameter posterior plots')
     # parser.add_argument('--init_days', type=int, default=1, metavar='N',
     #                     help='number of days to be pre-computed for convergence to periodic function')
     args = parser.parse_args()
+    assert(args.plot_freq % args.param_freq == 0)
+
+    ## Create folders
+    directory = "params-plots ({})".format(time.strftime("%Y%m%d-%H%M%S"))
+    os.mkdir(directory)
 
     ### Generate the symbolic system ###z
     _rhs = r
@@ -201,7 +213,7 @@ if __name__ == '__main__':
     times = []
     for i in range(2):
         for t in [1, 5, 9, 13, 17, 21]:
-            times.append(t + (init_days * 24) + 24*i)
+            times.append(t + (init_days * 24) + 24 * i)
     times = np.array(times)
     # data = np.array([
     #     [0.3318, 0.7588],
@@ -235,7 +247,8 @@ if __name__ == '__main__':
         print('Using VJP by Forward Sensitivity')
         plant_ode_model = ForwardSensManualJacobians(rhs_f, jac_x_f, jac_p_f, 7, 12,
                                                      times, 1e-5, 1e-6,
-                                                     [0.0649, 0.115, 0.0649, 0.0649, 0.0, 0.0, 0.0])  # Ttot, Ztot, T, Zd, Zl, TZd, TZl = y
+                                                     [0.0649, 0.115, 0.0649, 0.0649, 0.0, 0.0,
+                                                      0.0])  # Ttot, Ztot, T, Zd, Zl, TZd, TZl = y
 
         # plant_ode_model.set_unknown_y0()
         # method = 'NUTS'
@@ -254,28 +267,30 @@ if __name__ == '__main__':
                                    lr=lr, num_particles=num_particles,
                                    return_sites=("ode_params1", "ode_params2", "ode_params3", "ode_params4",
                                                  "ode_params5", "ode_params6", "ode_params7", "ode_params8",
-                                                 "ode_params9", "ode_params10", "ode_params11", "ode_params12"))
-        vb_params = np.concatenate((vb_samples['ode_params1'][:, None].detach().numpy(),
-                                    vb_samples['ode_params2'][:, None].detach().numpy(),
-                                    vb_samples['ode_params3'][:, None].detach().numpy(),
-                                    vb_samples['ode_params4'][:, None].detach().numpy(),
-                                    vb_samples['ode_params5'][:, None].detach().numpy(),
-                                    vb_samples['ode_params6'][:, None].detach().numpy(),
-                                    vb_samples['ode_params7'][:, None].detach().numpy(),
-                                    vb_samples['ode_params8'][:, None].detach().numpy(),
-                                    vb_samples['ode_params9'][:, None].detach().numpy(),
-                                    vb_samples['ode_params10'][:, None].detach().numpy(),
-                                    vb_samples['ode_params11'][:, None].detach().numpy(),
-                                    vb_samples['ode_params12'][:, None].detach().numpy()
-                                    ), axis=1)
-
-        # plot_marginals(vb_params, mc_params, param_names, rows=2)
-        plot_marginals(vb_params, vb_params, param_names, rows=12)
+                                                 "ode_params9", "ode_params10", "ode_params11", "ode_params12"),
+                                   directory=directory, param_freq=args.param_freq, plot_freq=args.plot_freq, param_names=param_names)
+        # vb_params = np.concatenate((vb_samples['ode_params1'][:, None].detach().numpy(),
+        #                             vb_samples['ode_params2'][:, None].detach().numpy(),
+        #                             vb_samples['ode_params3'][:, None].detach().numpy(),
+        #                             vb_samples['ode_params4'][:, None].detach().numpy(),
+        #                             vb_samples['ode_params5'][:, None].detach().numpy(),
+        #                             vb_samples['ode_params6'][:, None].detach().numpy(),
+        #                             vb_samples['ode_params7'][:, None].detach().numpy(),
+        #                             vb_samples['ode_params8'][:, None].detach().numpy(),
+        #                             vb_samples['ode_params9'][:, None].detach().numpy(),
+        #                             vb_samples['ode_params10'][:, None].detach().numpy(),
+        #                             vb_samples['ode_params11'][:, None].detach().numpy(),
+        #                             vb_samples['ode_params12'][:, None].detach().numpy()
+        #                             ), axis=1)
+        #
+        # # plot_marginals(vb_params, mc_params, param_names, rows=2)
+        # plot_marginals_vb(vb_params, param_names, rows=12)
     else:
         print('Using VJP by Adjoint Sensitivity')
         plant_ode_model = AdjointSensManualJacobians(rhs_f, jac_x_f, jac_p_f, 7, 12,
                                                      times, 1e-5, 1e-6,
-                                                     [0.0649, 0.115, 0.0649, 0.0649, 0.0, 0.0, 0.0])  # Ttot, Ztot, T, Zd, Zl, TZd, TZl = y
+                                                     [0.0649, 0.115, 0.0649, 0.0649, 0.0, 0.0,
+                                                      0.0])  # Ttot, Ztot, T, Zd, Zl, TZd, TZl = y
 
         # plant_ode_model.set_unknown_y0()
         # method = 'NUTS'
@@ -294,19 +309,20 @@ if __name__ == '__main__':
                                    lr=lr, num_particles=num_particles,
                                    return_sites=("ode_params1", "ode_params2", "ode_params3", "ode_params4",
                                                  "ode_params5", "ode_params6", "ode_params7", "ode_params8",
-                                                 "ode_params9", "ode_params10", "ode_params11", "ode_params12"))
-        vb_params = np.concatenate((vb_samples['ode_params1'][:, None].detach().numpy(),
-                                    vb_samples['ode_params2'][:, None].detach().numpy(),
-                                    vb_samples['ode_params3'][:, None].detach().numpy(),
-                                    vb_samples['ode_params4'][:, None].detach().numpy(),
-                                    vb_samples['ode_params5'][:, None].detach().numpy(),
-                                    vb_samples['ode_params6'][:, None].detach().numpy(),
-                                    vb_samples['ode_params7'][:, None].detach().numpy(),
-                                    vb_samples['ode_params8'][:, None].detach().numpy(),
-                                    vb_samples['ode_params9'][:, None].detach().numpy(),
-                                    vb_samples['ode_params10'][:, None].detach().numpy(),
-                                    vb_samples['ode_params11'][:, None].detach().numpy(),
-                                    vb_samples['ode_params12'][:, None].detach().numpy()
-                                    ), axis=1)
-        # plot_marginals(vb_params, mc_params, param_names, rows=2)
-        plot_marginals(vb_params, vb_params, param_names, rows=12)
+                                                 "ode_params9", "ode_params10", "ode_params11", "ode_params12"),
+                                   directory=directory, param_freq=args.param_freq, plot_freq=args.plot_freq, param_names=param_names)
+        # vb_params = np.concatenate((vb_samples['ode_params1'][:, None].detach().numpy(),
+        #                             vb_samples['ode_params2'][:, None].detach().numpy(),
+        #                             vb_samples['ode_params3'][:, None].detach().numpy(),
+        #                             vb_samples['ode_params4'][:, None].detach().numpy(),
+        #                             vb_samples['ode_params5'][:, None].detach().numpy(),
+        #                             vb_samples['ode_params6'][:, None].detach().numpy(),
+        #                             vb_samples['ode_params7'][:, None].detach().numpy(),
+        #                             vb_samples['ode_params8'][:, None].detach().numpy(),
+        #                             vb_samples['ode_params9'][:, None].detach().numpy(),
+        #                             vb_samples['ode_params10'][:, None].detach().numpy(),
+        #                             vb_samples['ode_params11'][:, None].detach().numpy(),
+        #                             vb_samples['ode_params12'][:, None].detach().numpy()
+        #                             ), axis=1)
+        # # plot_marginals(vb_params, mc_params, param_names, rows=2)
+        # plot_marginals_vb(vb_params, param_names, rows=12)
