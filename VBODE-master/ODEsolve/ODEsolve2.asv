@@ -30,24 +30,37 @@ d_T = 1.73117887973785;
 d_Z = 0.942879080772399;
 d_G = 0.853;
 d_P = 0.819;
-init_days = 2;
+init_days = 0;
 
 % % duplicate data, iteration 10000, lr=0.2
 t_t= 1;	
 k_f= 100;
-k_tZd= 0.1;
-k_tZl=0.0001;
-d_t=  0.1; %%%% 
-t_z= 10;
-d_Zd=0.1; %%%%
+k_tZd= 8.7;
+k_tZl=4.69;
+d_t= 0.1;
+t_z=1;
+d_Zd=12.73;
 k_l= 1000;
 k_d= 1000;
-d_Zl= 100; %%
-d_tZd=  0.1; %%%%
-d_tZl  =100; %%%
+d_Zl= 4.54;
+d_tZd= 0.1 ;
+d_tZl =0.0001;
 
-t=1:1:100;
-y=interp1(toc1mrna(1,:),toc1mrna(2,:),mod(t,24));
-plot(t,y)
-x=toc1mrna(:,1)
-plot(toc1mrna(1,:), toc1mrna(2,:))
+
+t_interval = [0 96];
+%t_interval = [0 24]+24*init_days;
+init_cond = [0.5 0.5 0.5 0.5 0.5];
+%init_cond = [init_toc1 init_ztlp 0 0 0];
+%solution
+%[t,y] = ode45(@(t,y) odefcn(t,y,d_G,d_P) , t_interval , init_cond);
+%[t,y] = ode45(@(t,y) odefcn2(t,y,d_T,d_Z) , t_interval , init_cond);
+[t,y] = ode15s(@(t,y) odefcn3(t,y,t_t, k_f, k_tZd, k_tZl, d_t, t_z, d_Zd, k_l, k_d, d_Zl, d_tZd, d_tZl) , t_interval , init_cond);
+figure(2)
+plot(t,y(:,1),'b',t,y(:,2),'r');
+%plot(t,y(:,3),'g',t,y(:,4),'g');
+hold on;
+plot(toc1p(1,:)+24*init_days,toc1p(2,:),'b.', 'MarkerSize', 20);
+plot(toc1p(1,:)+24*(init_days+1),toc1p(2,:),'b.', 'MarkerSize', 20);
+plot(ztotp(1,:)+24*init_days,ztotp(2,:),'r.','MarkerSize', 20);
+plot(ztotp(1,:)+24*(init_days+1),ztotp(2,:),'r.','MarkerSize', 20);
+%hold off

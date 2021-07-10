@@ -16,8 +16,6 @@ from ode_systems.forward_sensitivity_solvers import ForwardSensManualJacobians
 from ode_systems.adjoint_sensitivity_solvers import AdjointSensManualJacobians
 from sympy import interpolating_spline
 from sympy import Piecewise
-from sympy import cos
-
 
 init_days = 2
 
@@ -68,15 +66,28 @@ def light(t):
         result += l_24(t, 24 * i)
     return result
 
+
 ### Define ODE right hand side ###
 def r(y, t, p):
     # Obtain states and parameters
-    x = y  # 1
-    k, c, w = p  # 3
+    Ttot, Ztot, T, Zd, Zl, TZd, TZl = y  # 7
+    t_t, k_f, k_tZd, k_tZl, d_t, t_z, d_Zd, k_l, k_d, d_Zl, d_tZd, d_tZl = p  # 12
     # ODE model
-    dx_dt = k * cos(w*t) + c
+    dT_dt = t_t * mTOC1(t) - k_f * T * Ztot + k_tZd * TZd + k_tZl * TZl - d_t * T
 
-    return dx_dt
+    dZd_dt = t_z - k_f * T * Zd + k_tZd * TZd - d_Zd * Zd - k_l * light(t) * Zd + k_d * (1 - light(t)) * Zl
+
+    dZl_dt = k_l * light(t) * Zd - Zd + k_d * (1 - light(t)) * Zl - k_f * T * Zl + k_tZl * TZl - d_Zl * Zl
+
+    dTZd_dt = k_f * T * Zd - k_tZd * TZd - d_tZd * TZd
+
+    dTZl_dt = k_f * T * Zl - k_tZl * TZl - d_tZl * TZl
+
+    dTtot_dt = dT_dt + dTZd_dt + dTZl_dt
+
+    dZtot_dt = dZd_dt + dZl_dt + dZd_dt + dZd_dt
+
+    return dTtot_dt, dZtot_dt, dT_dt, dZd_dt, dZl_dt, dTZd_dt, dTZl_dt
 
 
 ### Define generative model ###
@@ -86,9 +97,20 @@ class PlantModel(PyroModule):
         self._ode_op = ode_op
         self._ode_model = ode_model
         # TODO: Incorporate appropriate priors
-        self.ode_params1 = PyroSample(dist.Gamma(1, 1e-2))  # k
-        self.ode_params2 = PyroSample(dist.Gamma(1, 1e-2))  # c
-        self.ode_params3 = PyroSample(dist.Gamma(1, 1e-2))  # w
+        self.ode_params1 = PyroSample(dist.Uniform(0, 1000))  # t_t
+        self.ode_params2 = PyroSample(dist.Uniform(0, 1000))   # k_f
+        self.ode_params3 = PyroSample(dist.Uniform(0, 1000))  # k_tZd
+        self.ode_params4 = PyroSample(dist.Uniform(0, 1000))  # k_tZl
+#        self.ode_params3 = PyroSample(dist.Uniform(0, 1000))  # k_tZd
+#        self.ode_params4 = PyroSample(dist.Uniform(0,1000))  # k_tZl
+        self.ode_params5 = PyroSample(dist.Uniform(0, 1000))  # d_t
+        self.ode_params6 = PyroSample(dist.Uniform(0, 1000))  # t_z
+        self.ode_params7 = PyroSample(dist.Uniform(0, 1000))  # d_Zd
+        self.ode_params8 = PyroSample(dist.Uniform(0, 1000))  # k_l
+        self.ode_params9 = PyroSample(dist.Uniform(0, 1000))  # k_d
+        self.ode_params10 = PyroSample(dist.Uniform(0, 1000))  # d_Zl
+        self.ode_params11 = PyroSample(dist.Uniform(0, 1000))  # d_tZd
+        self.ode_params12 = PyroSample(dist.Uniform(0, 1000))  # d_tZl
 
     def forward(self, data):
         scale = pyro.sample("scale", dist.HalfNormal(0.001))
@@ -97,18 +119,27 @@ class PlantModel(PyroModule):
         p1 = self.ode_params1.view((-1,))
         p2 = self.ode_params2.view((-1,))
         p3 = self.ode_params3.view((-1,))
-        ode_params = torch.stack([p1, p2, p3], dim=1)
+        p4 = self.ode_params4.view((-1,))
+        p5 = self.ode_params5.view((-1,))
+        p6 = self.ode_params6.view((-1,))
+        p7 = self.ode_params7.view((-1,))
+        p8 = self.ode_params8.view((-1,))
+        p9 = self.ode_params9.view((-1,))
+        p10 = self.ode_params10.view((-1,))
+        p11 = self.ode_params11.view((-1,))
+        p12 = self.ode_params12.view((-1,))
+        ode_params = torch.stack([p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11, p12], dim=1)
         simple_sim = self._ode_op.apply(ode_params, (self._ode_model,))
 
         for i in range(len(data)):
             try:
                 # TODO: Which distribution to use?
-                pyro.sample("obs_{}".format(i), dist.Exponential(simple_sim[..., i, 0]), obs=data[i])
+                # pyro.sample("obs_{}".format(i), dist.Exponential(simple_sim[..., i, 0]), obs=data[i])
                 # print(i, simple_sim[..., i, 0:2], '\n')
-                # pyro.sample("obs_{}".format(i), dist.Normal(loc=simple_sim[..., i, 0], scale=sd).to_event(2),
-                #             obs=data[i, :])
+                pyro.sample("obs_{}".format(i), dist.Normal(loc=simple_sim[..., i, 0:2], scale=sd).to_event(2),
+                            obs=data[i, :])
             except ValueError:
-                print(simple_sim[..., i, 0])
+                print(simple_sim[..., i, 0:2])
                 print("ERROR (invalid parameter for Normal...!): ")
         return simple_sim
 
@@ -161,14 +192,14 @@ if __name__ == '__main__':
 
     ### Generate the symbolic system ###z
     _rhs = r
-    _y, _p = sym.symbols('y:1'), sym.symbols('p:3')
+    _y, _p = sym.symbols('y:7'), sym.symbols('p:12')
     _t = sym.symbols('t')
     rhs_f, jac_x_f, jac_p_f = prepare_symbolic_plant(_rhs, _y, _p, _t)
 
     ### Input experimental data ###
     # times_ = np.array([1, 5, 9, 13, 17, 21]) + (init_days * 24)
     times = []
-    for i in range(1):
+    for i in range(2):
         for t in [1, 5, 9, 13, 17, 21]:
             times.append(t + (init_days * 24) + 24*i)
     times = np.array(times)
@@ -181,52 +212,30 @@ if __name__ == '__main__':
     #     [0.8149, 0.7287]
     # ])
     data = np.array([
-        2.965925826,
-        2.258819045,
-        1.292893219,
-        1.034074174,
-        1.741180955,
-        2.707106781
+        [0.0649, 0.115],  # 1 + init_days * 24
+        [0.0346, 0.187],  # 5 + init_days * 24
+        [0.29, 0.445],  # 9 + init_days * 24
+        [0.987, 1.],  # 13 + init_days * 24
+        [1., 0.718],  # 17 + init_days * 24
+        [0.645, 0.56],  # 21 + init_days * 24
+        [0.0649, 0.115],  # 1 + init_days * 24
+        [0.0346, 0.187],  # 5 + init_days * 24
+        [0.29, 0.445],  # 9 + init_days * 24
+        [0.987, 1.],  # 13 + init_days * 24
+        [1., 0.718],  # 17 + init_days * 24
+        [0.645, 0.56],  # 21 + init_days * 24
     ])
-    x = data
+    Ttot, Ztot = data[:, 0], data[:, 1]
     Y = data
 
     ### Run inference ###
-    param_names = [r"$k$", r"$c$", r"$w$"]
+    param_names = [r"$t_t$", r"$k_f$", r"$k_tZd$", r"$k_tZl$", r"$d_t$", r"$t_z$", r"$d_Zd$", r"$k_l$", r"$k_d$",
+                   r"$d_Zl$", r"$d_tZd$", r"$d_tZl$"]
     if not args.adjoint:
         print('Using VJP by Forward Sensitivity')
-        plant_ode_model = ForwardSensManualJacobians(rhs_f, jac_x_f, jac_p_f, 1, 3,
+        plant_ode_model = ForwardSensManualJacobians(rhs_f, jac_x_f, jac_p_f, 7, 12,
                                                      times, 1e-5, 1e-6,
-                                                     [2.0])  # x
-
-        # plant_ode_model.set_unknown_y0()
-        # method = 'NUTS'
-        # NUTS_samples = run_inference(Y, SIRGenModel, sir_ode_model, method, \
-        #     iterations = args.num_samples, warmup_steps = args.warmup_steps)
-        # mc_params=np.concatenate((NUTS_samples['ode_params1'][:,None],
-        #                     NUTS_samples['ode_params2'][:,None],
-        #                     NUTS_samples['ode_params3'][:,None]
-        #                     ),axis=1)
-
-        method = 'VI'
-        lr = 0.5
-        num_particles = 1
-        vb_samples = run_inference(Y, PlantModel, plant_ode_model, method,
-                                   iterations=args.iterations, num_samples=args.num_qsamples,
-                                   lr=lr, num_particles=num_particles,
-                                   return_sites=("ode_params1", "ode_params2", "ode_params3"))
-        vb_params = np.concatenate((vb_samples['ode_params1'][:, None].detach().numpy(),
-                                    vb_samples['ode_params2'][:, None].detach().numpy(),
-                                    vb_samples['ode_params3'][:, None].detach().numpy()
-                                    ), axis=1)
-
-        # plot_marginals(vb_params, mc_params, param_names, rows=2)
-        plot_marginals(vb_params, vb_params, param_names, rows=3)
-    else:
-        print('Using VJP by Adjoint Sensitivity')
-        plant_ode_model = AdjointSensManualJacobians(rhs_f, jac_x_f, jac_p_f, 1, 3,
-                                                     times, 1e-5, 1e-6,
-                                                     [2.0])
+                                                     [0.0649, 0.115, 0.0649, 0.0649, 0.0, 0.0, 0.0])  # Ttot, Ztot, T, Zd, Zl, TZd, TZl = y
 
         # plant_ode_model.set_unknown_y0()
         # method = 'NUTS'
@@ -243,10 +252,61 @@ if __name__ == '__main__':
         vb_samples = run_inference(Y, PlantModel, plant_ode_model, method,
                                    iterations=args.iterations, num_samples=args.num_qsamples,
                                    lr=lr, num_particles=num_particles,
-                                   return_sites=("ode_params1", "ode_params2", "ode_params3"))
+                                   return_sites=("ode_params1", "ode_params2", "ode_params3", "ode_params4",
+                                                 "ode_params5", "ode_params6", "ode_params7", "ode_params8",
+                                                 "ode_params9", "ode_params10", "ode_params11", "ode_params12"))
         vb_params = np.concatenate((vb_samples['ode_params1'][:, None].detach().numpy(),
                                     vb_samples['ode_params2'][:, None].detach().numpy(),
-                                    vb_samples['ode_params3'][:, None].detach().numpy()
+                                    vb_samples['ode_params3'][:, None].detach().numpy(),
+                                    vb_samples['ode_params4'][:, None].detach().numpy(),
+                                    vb_samples['ode_params5'][:, None].detach().numpy(),
+                                    vb_samples['ode_params6'][:, None].detach().numpy(),
+                                    vb_samples['ode_params7'][:, None].detach().numpy(),
+                                    vb_samples['ode_params8'][:, None].detach().numpy(),
+                                    vb_samples['ode_params9'][:, None].detach().numpy(),
+                                    vb_samples['ode_params10'][:, None].detach().numpy(),
+                                    vb_samples['ode_params11'][:, None].detach().numpy(),
+                                    vb_samples['ode_params12'][:, None].detach().numpy()
+                                    ), axis=1)
+
+        # plot_marginals(vb_params, mc_params, param_names, rows=2)
+        plot_marginals(vb_params, vb_params, param_names, rows=12)
+    else:
+        print('Using VJP by Adjoint Sensitivity')
+        plant_ode_model = AdjointSensManualJacobians(rhs_f, jac_x_f, jac_p_f, 7, 12,
+                                                     times, 1e-5, 1e-6,
+                                                     [0.0649, 0.115, 0.0649, 0.0649, 0.0, 0.0, 0.0])  # Ttot, Ztot, T, Zd, Zl, TZd, TZl = y
+
+        # plant_ode_model.set_unknown_y0()
+        # method = 'NUTS'
+        # NUTS_samples = run_inference(Y, SIRGenModel, sir_ode_model, method, \
+        #     iterations = args.num_samples, warmup_steps = args.warmup_steps)
+        # mc_params=np.concatenate((NUTS_samples['ode_params1'][:,None],
+        #                     NUTS_samples['ode_params2'][:,None],
+        #                     NUTS_samples['ode_params3'][:,None]
+        #                     ),axis=1)
+
+        method = 'VI'
+        lr = 0.2
+        num_particles = 1
+        vb_samples = run_inference(Y, PlantModel, plant_ode_model, method,
+                                   iterations=args.iterations, num_samples=args.num_qsamples,
+                                   lr=lr, num_particles=num_particles,
+                                   return_sites=("ode_params1", "ode_params2", "ode_params3", "ode_params4",
+                                                 "ode_params5", "ode_params6", "ode_params7", "ode_params8",
+                                                 "ode_params9", "ode_params10", "ode_params11", "ode_params12"))
+        vb_params = np.concatenate((vb_samples['ode_params1'][:, None].detach().numpy(),
+                                    vb_samples['ode_params2'][:, None].detach().numpy(),
+                                    vb_samples['ode_params3'][:, None].detach().numpy(),
+                                    vb_samples['ode_params4'][:, None].detach().numpy(),
+                                    vb_samples['ode_params5'][:, None].detach().numpy(),
+                                    vb_samples['ode_params6'][:, None].detach().numpy(),
+                                    vb_samples['ode_params7'][:, None].detach().numpy(),
+                                    vb_samples['ode_params8'][:, None].detach().numpy(),
+                                    vb_samples['ode_params9'][:, None].detach().numpy(),
+                                    vb_samples['ode_params10'][:, None].detach().numpy(),
+                                    vb_samples['ode_params11'][:, None].detach().numpy(),
+                                    vb_samples['ode_params12'][:, None].detach().numpy()
                                     ), axis=1)
         # plot_marginals(vb_params, mc_params, param_names, rows=2)
-        plot_marginals(vb_params, vb_params, param_names, rows=3)
+        plot_marginals(vb_params, vb_params, param_names, rows=12)
