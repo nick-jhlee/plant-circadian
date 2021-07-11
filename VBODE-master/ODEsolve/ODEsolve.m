@@ -30,21 +30,20 @@ init_ztlp =  0.51;
 % d_Z = 0.942879080772399;
 % d_G = 0.853;
 % d_P = 0.819;
-init_days = 1;
+init_days = 7;
 
-%time interval and initial condition
-t_t= 489;
-k_f= 884;
-k_tZd= 890;
-k_tZl=126; %897
-d_t= 347;
-t_z= 183.7;  
-d_Zd= 896;
-k_l= 116;%883
-k_d= 253;
-d_Zl= 694;
-d_tZd= 2.4;
-d_tZl = 869; % 893
+t_t=0.834389985	;
+k_f= 475.5373535;
+k_tZd=4.617882729; 
+k_tZl=88.66; %
+d_t=4.634044647; 
+t_z=4.656113625	;
+d_Zd=68.77112579; 
+k_l=11.54663944; %
+k_d=1.283440232	; %
+d_Zl=109.10971832	; %
+d_tZd=0.254422903	;
+d_tZl=9.89801598;
 
     
 t_interval = [(init_days-1)*24 (init_days+2)*24+3];
@@ -54,13 +53,18 @@ init_cond = [init_toc1 init_ztlp 0 0 0];
 %[t,y] = ode45(@(t,y) odefcn(t,y,d_G,d_P) , t_interval , init_cond);
 %[t,y] = ode45(@(t,y) odefcn2(t,y,d_T,d_Z) , t_interval , init_cond);
 [t,y] = ode45(@(t,y) odefcn4(t,y,t_t, k_f, k_tZd, k_tZl, d_t, t_z, d_Zd, k_l, k_d, d_Zl, d_tZd, d_tZl) , t_interval , init_cond);
-figure(4)
+figure(1)
 h1=plot(t,y(:,1)+y(:,4)+y(:,5),'b');
 hold on;
 % plot(t,y(:,1),'r');
 % plot(t,y(:,4),'g');
 % plot(t,y(:,5));
 h2=plot(t,y(:,2)+y(:,3)+y(:,4)+y(:,5),'r');
+h3=plot(t,y(:,1));
+h4=plot(t,y(:,2));
+h5=plot(t,y(:,3));
+h6=plot(t,y(:,4));
+h7=plot(t,y(:,5));
 plot(toc1p(1,:)+24*init_days,toc1p(2,:),'b.', 'MarkerSize', 20);
 plot(toc1p(1,:)+24*(init_days+1),toc1p(2,:),'b.', 'MarkerSize', 20);
 plot(ztotp(1,:)+24*init_days,ztotp(2,:),'r.','MarkerSize', 20);
@@ -68,7 +72,7 @@ plot(ztotp(1,:)+24*(init_days+1),ztotp(2,:),'r.','MarkerSize', 20);
 t=1:1:100;
 % y1=interp1(toc1mrna(1,:),toc1mrna(2,:),mod(t,24));
 % plot(t,y1)
-y2 = interp1(toc1p(1,:),toc1p(2,:),mod(t,24));
-plot(t,y2)
-% legend([h1 h2],{'TOC1','ZTLtot'});
+% y2 = interp1(toc1p(1,:),toc1p(2,:),mod(t,24));
+% plot(t,y2)
+ legend([h1 h2 h3 h4 h5 h6 h7],{'TOC1','ZTLtot', 'T', 'Zd', 'Zl', 'TZd', 'TZl'});
 %hold off

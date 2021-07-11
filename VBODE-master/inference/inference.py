@@ -129,6 +129,7 @@ def run_inference(data, gen_model, ode_model, method, iterations=10000, num_part
 
 
 def plot_marginals_vb(vb_params, param_names, directory, iter, real_params=None, rows=4):
+    plt.clf()
     sns.set_context("paper", font_scale=1)
     sns.set(rc={"figure.figsize": (9, 9), "font.size": 16, "axes.titlesize": 16, "axes.labelsize": 16,
                 "xtick.labelsize": 15, "ytick.labelsize": 15}, style="white")
