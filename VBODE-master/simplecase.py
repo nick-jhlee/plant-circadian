@@ -30,7 +30,7 @@ def extend_time(times_init):
 
 
 times1 = extend_time([0, 1, 5, 9, 13, 17, 21])
-mTOC1s = np.array([0.401508, 0.376, 0.376, 0.69, 1, 0.52, 0.489] * (init_days + 2))
+mTOC1s = np.array([0.401508, 0.376, 0.376, 0.69, 1., 0.52, 0.489] * (init_days + 2))
 
 times2 = extend_time([0, 3, 6, 9, 12, 15, 18, 21])
 mGIs = np.array([0.0535789, 0.277942, 0.813305, 1., 0.373043, 0.00648925, 0.00439222, 0.0122333] * (init_days + 2))
@@ -54,15 +54,15 @@ def mPRR3(t):
 ### Define ODE right hand side ###
 def r(y, t, p):
     #    Ttil, Gtil, Zdtil, Ptil = y
-    Gtil, Ptil = y
+    Gtil, = y
     #    d_t, d_G, d_zd, d_P = p
-    d_G, d_P = p
+    d_G,  = p
     #    dTtil_dt =  mTOC1(t) -d_t* Ttil
     dGtil_dt = mGI(t) - d_G * Gtil
     #    dZdtil_dt = 1 - d_zd * Zdtil
-    dPtil_dt = mPRR3(t) - d_P * Ptil
+#    dPtil_dt = mPRR3(t) - d_P * Ptil
     #    return dTtil_dt, dGtil_dt, dZdtil_dt, dPtil_dt
-    return dGtil_dt, dPtil_dt
+    return dGtil_dt#, dPtil_dt
 
 
 ### Define generative model ###
@@ -72,8 +72,8 @@ class PlantModel(PyroModule):
         self._ode_op = ode_op
         self._ode_model = ode_model
         # TODO: Incorporate appropriate priors (cf. MATALB codes from Daewook)
-        self.ode_params1 = PyroSample(dist.Gamma(1, 1000))  # dG
-        self.ode_params2 = PyroSample(dist.Gamma(1, 1000))  # dP
+        self.ode_params1 = PyroSample(dist.Uniform(-2, 2).rv.mul(2.302585093).exp().dist)  # dG
+#        self.ode_params2 = PyroSample(dist.Gamma(1, 1000))  # dP
         # self.ode_params3 = PyroSample(dist.Beta(0.5, 0.5))  # G0
         # self.ode_params4 = PyroSample(dist.Beta(0.5, 0.5))  # P0
         # self.ode_params3 = PyroSample(dist.Gamma(2,1))
@@ -84,8 +84,7 @@ class PlantModel(PyroModule):
         sd = scale.view((-1,)).unsqueeze(1)
         # print("sd: ", sd)
         p1 = self.ode_params1.view((-1,))
-        p2 = self.ode_params2.view((-1,))
-        ode_params = torch.stack([p1, p2], dim=1)
+        ode_params = torch.stack([p1], dim=1)
         simple_sim = self._ode_op.apply(ode_params, (self._ode_model,))
 
         for i in range(len(data)):
@@ -148,7 +147,7 @@ if __name__ == '__main__':
 
     ### Generate the symbolic system ###z
     _rhs = r
-    _y, _p = sym.symbols('y:2'), sym.symbols('p:2')
+    _y, _p = sym.symbols('y:1'), sym.symbols('p:1')
     # TODO : input _t
     _t = sym.symbols('t')
     rhs_f, jac_x_f, jac_p_f = prepare_symbolic_plant(_rhs, _y, _p, _t)
@@ -156,25 +155,25 @@ if __name__ == '__main__':
     ### Input experimental data ###
     times = np.array([0, 3, 6, 9, 12, 15, 18, 21, 24]) + (init_days * 24)
     data = np.array([
-        [0.237939, 0.021049],  # 0 + init_days * 24
-        [0.0842713, 0.0711328],  # 3 + init_days * 24
-        [0.365812, 0.128753],  # 6 + init_days * 24
-        [0.913379, 0.574524],  # 9 + init_days * 24
-        [1., 1.],  # 12 + init_days * 24
-        [0.425148, 0.587505],  # 15 + init_days * 24
-        [0.208709, 0.371859],  # 18 + init_days * 24
-        [0.0937085, 0.355726],  # 21 + init_days * 24
-        [0.096325, 0.104436],  # 24 + init_days * 24
+        [0.237939],  # 0 + init_days * 24
+        [0.0842713],  # 3 + init_days * 2
+        [0.365812],  # 6 + init_days * 24
+        [0.913379],  # 9 + init_days * 24
+        [1.],  # 12 + init_days * 24
+        [0.425148],  # 15 + init_days * 24
+        [0.208709],  # 18 + init_days * 24
+        [0.0937085],  # 21 + init_days * 24
+        [0.096325],  # 24 + init_days * 24
     ])
-    Gtil, Ptil = data[:, 0], data[:, 1]
+    Gtil = data[:, 0] #, Ptil = data[:, 0], data[:, 1]
     Y = data
 
     ### Run inference ###
-    param_names = [r"$d_G$", r"$d_P$"]
+    param_names = [r"$d_G$"]
     if not args.adjoint:
         print('Using VJP by Forward Sensitivity')
-        plant_ode_model = ForwardSensManualJacobians(rhs_f, jac_x_f, jac_p_f, 2, 2,
-                                                     times, 1e-5, 1e-6, [0.237939, 0.021049])
+        plant_ode_model = ForwardSensManualJacobians(rhs_f, jac_x_f, jac_p_f, 1, 1,
+                                                     times, 1e-5, 1e-6, [0.237939])
 
         # plant_ode_model.set_unknown_y0()
         # method = 'NUTS'
@@ -190,17 +189,16 @@ if __name__ == '__main__':
         num_particles = 1
         vb_samples = run_inference(Y, PlantModel, plant_ode_model, method,
                                    iterations=args.iterations, num_samples=args.num_qsamples,
-                                   lr=lr, num_particles=num_particles, return_sites=("ode_params1", "ode_params2"))
-        vb_params = np.concatenate((vb_samples['ode_params1'][:, None].detach().numpy(),
-                                    vb_samples['ode_params2'][:, None].detach().numpy()
+                                   lr=lr, num_particles=num_particles, return_sites=("ode_params1"))
+        vb_params = np.concatenate((vb_samples['ode_params1'][:, None].detach().numpy()
                                     ), axis=1)
 
         # plot_marginals(vb_params, mc_params, param_names, rows=2)
         plot_marginals(vb_params, vb_params, param_names, rows=2)
     else:
         print('Using VJP by Adjoint Sensitivity')
-        plant_ode_model = AdjointSensManualJacobians(rhs_f, jac_x_f, jac_p_f, 2, 2,
-                                                     times, 1e-5, 1e-6, [0.237939, 0.021049])
+        plant_ode_model = AdjointSensManualJacobians(rhs_f, jac_x_f, jac_p_f, 1, 1,
+                                                     times, 1e-5, 1e-6, [0.237939])
 
         # plant_ode_model.set_unknown_y0()
         # method = 'NUTS'
@@ -216,9 +214,8 @@ if __name__ == '__main__':
         num_particles = 1
         vb_samples = run_inference(Y, PlantModel, plant_ode_model, method,
                                    iterations=args.iterations, num_samples=args.num_qsamples,
-                                   lr=lr, num_particles=num_particles, return_sites=("ode_params1", "ode_params2"))
-        vb_params = np.concatenate((vb_samples['ode_params1'][:, None].detach().numpy(),
-                                    vb_samples['ode_params2'][:, None].detach().numpy()
+                                   lr=lr, num_particles=num_particles, return_sites=("ode_params1"))
+        vb_params = np.concatenate((vb_samples['ode_params1'][:, None].detach().numpy()
                                     ), axis=1)
         # plot_marginals(vb_params, mc_params, param_names, rows=2)
         plot_marginals(vb_params, vb_params, param_names, rows=2)

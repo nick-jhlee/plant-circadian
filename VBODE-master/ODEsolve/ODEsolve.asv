@@ -30,43 +30,54 @@ init_ztlp =  0.51;
 % d_Z = 0.942879080772399;
 % d_G = 0.853;
 % d_P = 0.819;
-init_days = 7;
-t_t=1.1298;
-k_f=353.947; %
-k_tZd=4.85983; 
-k_tZl=2.5876; %
-d_t=6.23505; 
-t_z=5.49797;
-d_Zd=59.121; 
-k_l=5.005; %
-k_d=1.40435; %
-d_Zl=11.18; %
-d_tZd=0.32295;
-d_tZl=4.9;
+init_days = 1;
 
-    
-t_interval = [(init_days-1)*24 (init_days+2)*24+3];
+t_t=1;
+k_f= 10;
+k_tZd= 1; % 내린다  / min diff
+k_tZl= 0.01; %
+d_t= 1; 
+t_z= 1	; %compared max
+d_Zd= 1; 
+k_l =100 ; %redamp
+k_d= 100; %
+d_Zl= 10; %max
+d_tZd=1;
+d_tZl= 10;
+
+d_G=.01;
+t_interval = [0 24];
+t_interval = [(init_days-1)*24 (init_days)*24+1];
 %t_interval = [0 24]+24*init_days;
 init_cond = [init_toc1 init_ztlp 0 0 0];
 %solution
 %[t,y] = ode45(@(t,y) odefcn(t,y,d_G,d_P) , t_interval , init_cond);
 %[t,y] = ode45(@(t,y) odefcn2(t,y,d_T,d_Z) , t_interval , init_cond);
 [t,y] = ode45(@(t,y) odefcn4(t,y,t_t, k_f, k_tZd, k_tZl, d_t, t_z, d_Zd, k_l, k_d, d_Zl, d_tZd, d_tZl) , t_interval , init_cond);
+%[t,y] = ode45(@(t,y) odefcnGI(t,y,d_G) , t_interval , [0.3]);
 figure(1)
-h1=plot(t,y(:,1)+y(:,4)+y(:,5),'b');
-hold on;
+%h1=plot(t,y(:,1),'b');
+%hold on;
 % plot(t,y(:,1),'r');
 % plot(t,y(:,4),'g');
 % plot(t,y(:,5));
-h2=plot(t,y(:,2)+y(:,3)+y(:,4)+y(:,5),'r');
-plot(toc1p(1,:)+24*init_days,toc1p(2,:),'b.', 'MarkerSize', 20);
-plot(toc1p(1,:)+24*(init_days+1),toc1p(2,:),'b.', 'MarkerSize', 20);
-plot(ztotp(1,:)+24*init_days,ztotp(2,:),'r.','MarkerSize', 20);
-plot(ztotp(1,:)+24*(init_days+1),ztotp(2,:),'r.','MarkerSize', 20);
-t=1:1:100;
-% y1=interp1(toc1mrna(1,:),toc1mrna(2,:),mod(t,24));
+%h2=plot(t,y(:,2)+y(:,3)+y(:,4)+y(:,5),'r');
+% h3=plot(t,y(:,1));
+% h4=plot(t,y(:,2));
+% h5=plot(t,y(:,3));
+% h6=plot(t,y(:,4));
+% h7=plot(t,y(:,5));
+plot(gip(1,:)+24*(init_days-1),gip(2,:),'b.', 'MarkerSize', 20);
+%plot(toc1p(1,:)+24*(init_days+1),ztotp(2,:),'b.', 'MarkerSize', 20);
+% plot(ztotp(1,:)+24*init_days,ztotp(2,:),'r.','MarkerSize', 20);
+% plot(ztotp(1,:)+24*(init_days+1),ztotp(2,:),'r.','MarkerSize', 20);
+% figure(3)
+% t=1:1:24;
+% y1=interp1(gimrna(1,:),gimrna(2,:),mod(t,24));
 % plot(t,y1)
 % y2 = interp1(toc1p(1,:),toc1p(2,:),mod(t,24));
 % plot(t,y2)
-% legend([h1 h2],{'TOC1','ZTLtot'});
+%legend([h1 h2 h3 h4 h5 h6 h7],{'TOC1','ZTLtot', 'T', 'Zd', 'Zl', 'TZd', 'TZl'});
 %hold off
+
+
