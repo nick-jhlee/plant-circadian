@@ -13,7 +13,7 @@ if t_<=12
     light = 1;
 % Zl was y(2) now (y(2)-y(3))
 
-dydt(1) = t_t *interp1(toc1mrna(1,:),toc1mrna(2,:),mod(t,24)) - k_f * y(1) * (y(2)+y(3)) + k_tZd * y(4)+ k_tZl * y(5) - d_t * y(1);
+dydt(1) = t_t *interp1(toc1mrna(1,:),toc1mrna(2,:),mod(t,24),'spline') - k_f * y(1) * (y(2)+y(3)) + k_tZd * y(4)+ k_tZl * y(5) - d_t * y(1);
 dydt(2) = t_z - k_f * y(1) *y(2) + k_tZd * y(4) - d_Zd * y(2) - k_l * heaviside(12-mod(t,24))* y(2)+ k_d * (1 - heaviside(12-mod(t,24))) *  y(3);
 dydt(3) =  - k_f * y(1) * (y(2)+y(3)) + k_tZd * y(4) + k_tZl * y(5)  - d_Zl *  y(3) - d_Zd * y(2) ;
 dydt(4) = k_f * y(1) * y(2) - k_tZd * y(4) - d_tZd * y(4);

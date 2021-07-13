@@ -72,12 +72,18 @@ plot(toc1p(1,:)+24*(init_days+1),toc1p(2,:),'b.', 'MarkerSize', 20);
 plot(ztotp(1,:)+24*init_days,ztotp(2,:),'r.','MarkerSize', 20);
 plot(ztotp(1,:)+24*(init_days+1),ztotp(2,:),'r.','MarkerSize', 20);
 % figure(3)
-% t=1:1:24;
+% 
 % y1=interp1(gimrna(1,:),gimrna(2,:),mod(t,24));
 % plot(t,y1)
 % y2 = interp1(toc1p(1,:),toc1p(2,:),mod(t,24));
 % plot(t,y2)
 %legend([h1 h2 h3 h4 h5 h6 h7],{'TOC1','ZTLtot', 'T', 'Zd', 'Zl', 'TZd', 'TZl'});
 %hold off
-
-
+% figure(100)
+% N=200;
+% t=1:1:24;
+% toc1mrna=[0 1 5 9 13 17 21 24; ...
+%     0.401508 0.376 0.376 0.69 1 0.52 0.489 0.401508];
+% x=toc1mrna(1,:);
+% f=toc1mrna(2,:);
+% y=interp1(x,f,t,'spline');
