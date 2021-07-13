@@ -32,20 +32,49 @@ init_ztlp =  0.51;
 % d_P = 0.819;
 init_days = 7;
 
-t_t=1;
-k_f= 10;
-k_tZd= 1; % 내린다  / min diff
-k_tZl= 0.01; %
-d_t= 1; 
-t_z= 1	; %compared max
-d_Zd= 1; 
-k_l =100 ; %redamp
-k_d= 100; %
-d_Zl= 10; %max
-d_tZd=1;
-d_tZl= 10;
+% t_t=1;
+% k_f= 10;
+% k_tZd= 1; % 내린다  / min diff
+% k_tZl= 0.01; %
+% d_t= 1; 
+% t_z= 1	; %compared max
+% d_Zd= 1; 
+% k_l =100 ; %redamp
+% k_d= 100; %
+% d_Zl= 10; %max
+% d_tZd=1;
+% d_tZl= 10;
+% d_G=.01;
+t_t=1.565837741;
+k_f=361.8899231;
+k_tZd=7.028651237;
+k_tZl=40.65612411;
+d_t=6.322482586;
+t_z=5.2820158;
+d_Zd=54.22028351;
+k_l=18.07324409;
+k_d=2.011872053;
+d_Zl=44.54772568;
+d_tZd=0.527880967;
+d_tZl=33.74554062;
 
-d_G=.01;
+t_interval1 = [0, 12];
+t_interval2 = [12, 24];
+
+init_cond1 = [init_toc1 init_ztlp 0 0 0];
+
+[t1, y1] = ode15s(@(t,y) odefcn3_1(t,y,t_t, k_f, k_tZd, k_tZl, d_t, t_z, d_Zd, k_l, k_d, d_Zl, d_tZd, d_tZl), t_interval1, init_cond1);
+
+init_cond2 = y1(end,:);
+[t2, y2] = ode15s(@(t,y) odefcn3_2(t,y,t_t, k_f, k_tZd, k_tZl, d_t, t_z, d_Zd, k_l, k_d, d_Zl, d_tZd, d_tZl), t_interval2, init_cond2);
+
+
+figure(1)
+h1 = plot(t1, y1(:,1) + y1(:,3) + y1(:,4), t2, y2(:,1) + y2(:,3) + y2(:,4));
+hold on;
+h2 = plot(t1, y1(:,2) + y1(:,4) + y1(:,5), t2, y2(:,2) + y2(:,4) + y2(:,5));
+
+if false
 t_interval = [0 24];
 t_interval = [(init_days-1)*24 (init_days+2)*24+1];
 %t_interval = [0 24]+24*init_days;
@@ -67,10 +96,17 @@ h2=plot(t,y(:,2)+y(:,4)+y(:,5),'r');
 % h5=plot(t,y(:,3));
 % h6=plot(t,y(:,4));
 % h7=plot(t,y(:,5));
-plot(toc1p(1,:)+24*(init_days),toc1p(2,:),'b.', 'MarkerSize', 20);
-plot(toc1p(1,:)+24*(init_days+1),toc1p(2,:),'b.', 'MarkerSize', 20);
-plot(ztotp(1,:)+24*init_days,ztotp(2,:),'r.','MarkerSize', 20);
-plot(ztotp(1,:)+24*(init_days+1),ztotp(2,:),'r.','MarkerSize', 20);
+end
+% plot(toc1p(1,:)+24*(init_days),toc1p(2,:),'b.', 'MarkerSize', 20);
+% plot(toc1p(1,:)+24*(init_days+1),toc1p(2,:),'b.', 'MarkerSize', 20);
+% plot(ztotp(1,:)+24*init_days,ztotp(2,:),'r.','MarkerSize', 20);
+% plot(ztotp(1,:)+24*(init_days+1),ztotp(2,:),'r.','MarkerSize', 20);
+
+plot(toc1p(1,:),toc1p(2,:),'b.', 'MarkerSize', 20);
+plot(toc1p(1,:),toc1p(2,:),'b.', 'MarkerSize', 20);
+plot(ztotp(1,:),ztotp(2,:),'r.','MarkerSize', 20);
+plot(ztotp(1,:),ztotp(2,:),'r.','MarkerSize', 20);
+
 % figure(3)
 % 
 % y1=interp1(gimrna(1,:),gimrna(2,:),mod(t,24));
