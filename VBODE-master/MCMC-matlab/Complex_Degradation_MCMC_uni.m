@@ -86,9 +86,10 @@ for iii=1:length(cdir)
     
     mtan=1/4;
     
-    prior1=1;
-    
-    prior2=1;
+%     prior1 = (1-tanh(mtan*abs(log10(10*cdir(6)/min(dir(3), dir(4))))));   % degradation rate: ZTL_l-GI = 0.1 * min(ZTL_l, GI)
+%     prior2 = (1-tanh(mtan*abs(log10(10*cdpr(6)/min(dir(3), dir(4))))));   % degradation rate: ZTL_l-GI = 0.1 * min(ZTL_l, GI)
+    prior1 = 1;   % degradation rate: ZTL_l-GI = 0.1 * min(ZTL_l, GI)
+    prior2 = 1;   % degradation rate: ZTL_l-GI = 0.1 * min(ZTL_l, GI)
     
     p1=1; p2=1;
     u=rand;
