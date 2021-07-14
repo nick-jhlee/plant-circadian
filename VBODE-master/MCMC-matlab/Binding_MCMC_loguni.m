@@ -4,7 +4,7 @@ global tt tz tg tp ...
     dt dz1 dz2 dg dp ...
     kc1 kc2 ...
     bb ... 
-    dtz1 dtz2 dtg  dtp dz1g dz2g dz1p dz2p dgp ...
+    dtz1_t dtz1_z1 dtz2_t dtz2_z2 dtg_t dtg_g dtp_t dtp_p dz1g_z1 dz1g_g dz2g_z2 dz2g_g dz1p_z1 dz1p_p dz2p_z2 dz2p_p dgp_g dgp_p ...
     ubtz1 ubtz2 ubtg ubtp ubzg1 ubzg2 ubzp1 ubzp2 ubgp ...
     light deci days toc1mrna gimrna prr3mrna iternum 
 
@@ -46,7 +46,7 @@ tmp=num2cell(tpr); dmp=num2cell(dpr); kmp=num2cell(kpr); bmp=num2cell(bpr); ubmp
 [bb]=deal(bmp{:});
 [ubtz1 ubtz2 ubtg ubtp ubzg1 ...
     ubzg2 ubzp1 ubzp2 ubgp]=deal(ubmp{:});
-[dtz1 dtz2 dtg  dtp dz1g dz2g dz1p dz2p dgp]=deal(cdmp{:});
+[dtz1_t dtz1_z1 dtz2_t dtz2_z2 dtg_t dtg_g dtp_t dtp_p dz1g_z1 dz1g_g dz2g_z2 dz2g_g dz1p_z1 dz1p_p dz2p_z2 dz2p_p dgp_g dgp_p]=deal(cdmp{:});
 plevel = [];
 C2=0*ones(1,14);
 
@@ -54,14 +54,14 @@ C2=0*ones(1,14);
     for j=1:days
         light = 1;
         tspan = 24*(j-1):1:24*(j-1)+12;
-        [T2,C2] = ode15s('multi_degradation_ODE_v3',tspan,C2(end,:));
+        [T2,C2] = ode15s('multi_degradation_ODE_v4',tspan,C2(end,:));
         if j==days
             plevel = [plevel; C2];
         end
         
         light = 0;
         tspan = 24*(j-1)+12:1:24*j;
-        [T2,C2] = ode15s('multi_degradation_ODE_v3',tspan,C2(end,:));
+        [T2,C2] = ode15s('multi_degradation_ODE_v4',tspan,C2(end,:));
         if j==days
             plevel=[plevel; C2(2:end,:)];
         end

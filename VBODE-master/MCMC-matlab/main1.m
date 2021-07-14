@@ -11,7 +11,7 @@ global tt tz tg tp ...
     kc1 kc2 ...
     bb ... 
     ubtz1 ubtz2 ubtg ubtp ubzg1 ubzg2 ubzp1 ubzp2 ubgp ...
-    dtz1 dtz2 dtg  dtp dz1g dz2g dz1p dz2p dgp ...
+    dtz1_t dtz1_z1 dtz2_t dtz2_z2 dtg_t dtg_g dtp_t dtp_p dz1g_z1 dz1g_g dz2g_z2 dz2g_g dz1p_z1 dz1p_p dz2p_z2 dz2p_p dgp_g dgp_p ...
     light deci days toc1mrna gimrna prr3mrna iternum
 
 toc1mrna=[0 1 5 9 13 17 21 24; ...
@@ -36,10 +36,9 @@ gerror=[0.0214103, 0.0508533, 0.128269, 0.0498922, 0.0121651, 0.192175, 0.104515
 p3error=[0.00703093, 0.017507, 0.0281341, 0.027253, 0, 0.0132593, 0.0297481, 0.0610875, 0.0522455]';
 
 % Decision
-
-dmatrix=dec2bin(0:63)-'0';
-deci=dmatrix(fnum,:);
-csvwrite(['deci', num2str(fnum),'.csv'],deci);
+% dmatrix=dec2bin(0:63)-'0';
+% deci=dmatrix(fnum,:);
+% csvwrite(['deci', num2str(fnum),'.csv'],deci);
 
 iter=1;
 tscale=100;
@@ -47,7 +46,7 @@ tscale=100;
 for repeat=1:1:1
 
 tinit=[1 1 1 1]; dinit=[1 1 1 1 1];
-cdinit = [1 1 1 1 1 1 1 1 1];
+cdinit = [1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1];
 kinit=[1 1];
 binit=tscale; 
 ubinit=tscale.*[1 1 1 1 1 1 1 1 1];
@@ -60,7 +59,7 @@ rr=[trr,drr,krr,brr,ubrr,cdrr];
 % Initialize acceptance ratio
 taa=zeros(iter,4); daa=zeros(iter,5);
 kaa=zeros(iter,2); baa=zeros(iter,1); ubaa=zeros(iter,9);
-cdaa=zeros(iter,9);
+cdaa=zeros(iter,18);
 aa=[taa,daa,kaa,baa,ubaa,cdaa];
 
 tmp=num2cell(tir); dmp=num2cell(dir); kmp=num2cell(kir); 
@@ -71,7 +70,7 @@ bmp=num2cell(bir); ubmp=num2cell(ubir); cdmp=num2cell(cdir);
 [kc1 kc2]=deal(kmp{:});
 [bb]=deal(bmp{:});
 [ubtz1 ubtz2 ubtg ubtp ubzg1 ubzg2 ubzp1 ubzp2 ubgp]=deal(ubmp{:});
-[dtz1 dtz2 dtg  dtp dz1g dz2g dz1p dz2p dgp]=deal(cdmp{:});
+[dtz1_t dtz1_z1 dtz2_t dtz2_z2 dtg_t dtg_g dtp_t dtp_p dz1g_z1 dz1g_g dz2g_z2 dz2g_g dz1p_z1 dz1p_p dz2p_z2 dz2p_p dgp_g dgp_p]=deal(cdmp{:});
 
 days=6;
 plevel = [];
@@ -80,14 +79,14 @@ C1=0*ones(1,14);
 for j=1:days
    light = 1;
    tspan = 24*(j-1):1:24*(j-1)+12;
-   [T1,C1] = ode15s('multi_degradation_ODE_v3',tspan,C1(end,:));
+   [T1,C1] = ode15s('multi_degradation_ODE_v4',tspan,C1(end,:));
    if j==days
    plevel = [plevel; C1];
    end
    
    light = 0;
    tspan = 24*(j-1)+12:1:24*j;
-   [T1,C1] = ode15s('multi_degradation_ODE_v3',tspan,C1(end,:));
+   [T1,C1] = ode15s('multi_degradation_ODE_v4',tspan,C1(end,:));
    if j==days
    plevel=[plevel; C1(2:end,:)];   
    end 
