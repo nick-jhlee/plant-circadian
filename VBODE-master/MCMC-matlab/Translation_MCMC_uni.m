@@ -4,6 +4,7 @@ global tt tz tg tp ...
     dt dz1 dz2 dg dp ...
     kc1 kc2 ...
     bb ... 
+    dtz1 dtz2 dtg  dtp dz1g dz2g dz1p dz2p dgp ...
     ubtz1 ubtz2 ubtg ubtp ubzg1 ubzg2 ubzp1 ubzp2 ubgp ...
     light deci days toc1mrna gimrna prr3mrna iternum 
 
@@ -53,14 +54,14 @@ for iii=1:length(tir)
     for j=1:days
         light = 1;
         tspan = 24*(j-1):1:24*(j-1)+12;
-        [T2,C2] = ode15s('multi_degradation_ODE_v2',tspan,C2(end,:));
+        [T2,C2] = ode15s('multi_degradation_ODE_v3',tspan,C2(end,:));
         if j==days
             plevel = [plevel; C2];
         end
         
         light = 0;
         tspan = 24*(j-1)+12:1:24*j;
-        [T2,C2] = ode15s('multi_degradation_ODE_v2',tspan,C2(end,:));
+        [T2,C2] = ode15s('multi_degradation_ODE_v3',tspan,C2(end,:));
         if j==days
             plevel=[plevel; C2(2:end,:)];
         end
