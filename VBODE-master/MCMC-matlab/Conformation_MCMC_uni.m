@@ -1,9 +1,10 @@
-function [oitdata,oizdata,oigdata,oip3data,okir,okaa] = Conformation_MCMC_uni(itdata,izdata,igdata,ip3data,tir,dir,kir,bir,ubir,kaa)
+function [oitdata,oizdata,oigdata,oip3data,okir,okaa] = Conformation_MCMC_uni(itdata,izdata,igdata,ip3data,tir,dir,kir,bir,ubir,cdir,kaa)
 
 global tt tz tg tp ... 
     dt dz1 dz2 dg dp ...
     kc1 kc2 ...
     bb ... 
+    dtz1 dtz2 dtg  dtp dz1g dz2g dz1p dz2p dgp ...
     ubtz1 ubtz2 ubtg ubtp ubzg1 ubzg2 ubzp1 ubzp2 ubgp ...
     light deci days toc1mrna gimrna prr3mrna iternum 
 
@@ -32,13 +33,13 @@ p3error=unc1.*([0.00703093, 0.017507, 0.0281341, 0.027253, 0, 0.0132593, 0.02974
 
 for iii=1:length(kir)
     
-    tpr=tir; dpr=dir; kpr=kir; bpr=bir; ubpr=ubir;
+    tpr=tir; dpr=dir; kpr=kir; bpr=bir; ubpr=ubir; cdpr=cdir;
     
     ir=kir(iii);
     pr=100*rand;
     kpr(iii)=pr;
     
-    tmp=num2cell(tpr); dmp=num2cell(dpr); kmp=num2cell(kpr); bmp=num2cell(bpr); ubmp=num2cell(ubpr);
+    tmp=num2cell(tpr); dmp=num2cell(dpr); kmp=num2cell(kpr); bmp=num2cell(bpr); ubmp=num2cell(ubpr);  cdmp=num2cell(cdpr);
     
     [tt tz tg tp]=deal(tmp{:});
     [dt dz1 dz2 dg dp]=deal(dmp{:});
@@ -46,7 +47,7 @@ for iii=1:length(kir)
     [bb]=deal(bmp{:});
     [ubtz1 ubtz2 ubtg ubtp ubzg1 ...
         ubzg2 ubzp1 ubzp2 ubgp]=deal(ubmp{:});
-    
+    [dtz1 dtz2 dtg  dtp dz1g dz2g dz1p dz2p dgp]=deal(cdmp{:});
     plevel = [];
     C2=0*ones(1,14);
     

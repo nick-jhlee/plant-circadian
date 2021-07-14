@@ -1,4 +1,4 @@
-function [oitdata,oizdata,oigdata,oip3data,obir,obaa] = Binding_MCMC_loguni(itdata,izdata,igdata,ip3data,tir,dir,kir,bir,ubir,baa)
+function [oitdata,oizdata,oigdata,oip3data,obir,obaa] = Binding_MCMC_loguni(itdata,izdata,igdata,ip3data,tir,dir,kir,bir,ubir,cdir,baa)
 
 global tt tz tg tp ... 
     dt dz1 dz2 dg dp ...
@@ -32,13 +32,13 @@ gerror=unc1.*([0.0214103, 0.0508533, 0.128269, 0.0498922, 0.0121651, 0.192175, 0
 p3error=unc1.*([0.00703093, 0.017507, 0.0281341, 0.027253, 0, 0.0132593, 0.0297481, 0.0610875, 0.0522455]'+unc2);
 
     
-tpr=tir; dpr=dir; kpr=kir; bpr=bir; ubpr=ubir;
+tpr=tir; dpr=dir; kpr=kir; bpr=bir; ubpr=ubir; cdpr=cdir;
 
 ir=bir(1);
 pr=10^(-4 + 8*rand);
 bpr=pr;
     
-tmp=num2cell(tpr); dmp=num2cell(dpr); kmp=num2cell(kpr); bmp=num2cell(bpr); ubmp=num2cell(ubpr);
+tmp=num2cell(tpr); dmp=num2cell(dpr); kmp=num2cell(kpr); bmp=num2cell(bpr); ubmp=num2cell(ubpr);  cdmp=num2cell(cdpr);
 
 [tt tz tg tp]=deal(tmp{:});
 [dt dz1 dz2 dg dp]=deal(dmp{:});
@@ -46,9 +46,10 @@ tmp=num2cell(tpr); dmp=num2cell(dpr); kmp=num2cell(kpr); bmp=num2cell(bpr); ubmp
 [bb]=deal(bmp{:});
 [ubtz1 ubtz2 ubtg ubtp ubzg1 ...
     ubzg2 ubzp1 ubzp2 ubgp]=deal(ubmp{:});
-
+[dtz1 dtz2 dtg  dtp dz1g dz2g dz1p dz2p dgp]=deal(cdmp{:});
 plevel = [];
 C2=0*ones(1,14);
+
     
     for j=1:days
         light = 1;

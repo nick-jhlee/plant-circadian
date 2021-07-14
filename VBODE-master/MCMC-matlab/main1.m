@@ -11,6 +11,7 @@ global tt tz tg tp ...
     kc1 kc2 ...
     bb ... 
     ubtz1 ubtz2 ubtg ubtp ubzg1 ubzg2 ubzp1 ubzp2 ubgp ...
+    dtz1 dtz2 dtg  dtp dz1g dz2g dz1p dz2p dgp ...
     light deci days toc1mrna gimrna prr3mrna iternum
 
 toc1mrna=[0 1 5 9 13 17 21 24; ...
@@ -40,34 +41,37 @@ dmatrix=dec2bin(0:63)-'0';
 deci=dmatrix(fnum,:);
 csvwrite(['deci', num2str(fnum),'.csv'],deci);
 
-iter=5000;
+iter=1;
 tscale=100;
 
-for repeat=1:1:1000
+for repeat=1:1:1
 
 tinit=[1 1 1 1]; dinit=[1 1 1 1 1];
+cdinit = [1 1 1 1 1 1 1 1 1];
 kinit=[1 1];
 binit=tscale; 
 ubinit=tscale.*[1 1 1 1 1 1 1 1 1];
 
 tir=tinit; dir=dinit; kir=kinit; bir=binit; ubir=ubinit;
-trr=tir; drr=dir; krr=kir; brr=bir; ubrr=ubir;
-rr=[trr,drr,krr,brr,ubrr];
+cdir = cdinit;
+trr=tir; drr=dir; krr=kir; brr=bir; ubrr=ubir; cdrr=cdir;
+rr=[trr,drr,krr,brr,ubrr,cdrr];
 
 % Initialize acceptance ratio
 taa=zeros(iter,4); daa=zeros(iter,5);
 kaa=zeros(iter,2); baa=zeros(iter,1); ubaa=zeros(iter,9);
-aa=[taa,daa,kaa,baa,ubaa];
+cdaa=zeros(iter,9);
+aa=[taa,daa,kaa,baa,ubaa,cdaa];
 
 tmp=num2cell(tir); dmp=num2cell(dir); kmp=num2cell(kir); 
-bmp=num2cell(bir); ubmp=num2cell(ubir);
+bmp=num2cell(bir); ubmp=num2cell(ubir); cdmp=num2cell(cdir);
 
 [tt tz tg tp]=deal(tmp{:});
 [dt dz1 dz2 dg dp]=deal(dmp{:});
 [kc1 kc2]=deal(kmp{:});
 [bb]=deal(bmp{:});
-[ubtz1 ubtz2 ubtg ubtp ubzg1 ...
-    ubzg2 ubzp1 ubzp2 ubgp]=deal(ubmp{:});
+[ubtz1 ubtz2 ubtg ubtp ubzg1 ubzg2 ubzp1 ubzp2 ubgp]=deal(ubmp{:});
+[dtz1 dtz2 dtg  dtp dz1g dz2g dz1p dz2p dgp]=deal(cdmp{:});
 
 days=6;
 plevel = [];
@@ -76,14 +80,14 @@ C1=0*ones(1,14);
 for j=1:days
    light = 1;
    tspan = 24*(j-1):1:24*(j-1)+12;
-   [T1,C1] = ode15s('multi_degradation_ODE_v2',tspan,C1(end,:));
+   [T1,C1] = ode15s('multi_degradation_ODE_v3',tspan,C1(end,:));
    if j==days
    plevel = [plevel; C1];
    end
    
    light = 0;
    tspan = 24*(j-1)+12:1:24*j;
-   [T1,C1] = ode15s('multi_degradation_ODE_v2',tspan,C1(end,:));
+   [T1,C1] = ode15s('multi_degradation_ODE_v3',tspan,C1(end,:));
    if j==days
    plevel=[plevel; C1(2:end,:)];   
    end 
@@ -120,27 +124,31 @@ for i=1:iter
   iternum=i;
    
   %% Translation MCMC
-  [itdata,izdata,igdata,ip3data,tir,taa]=Translation_MCMC_uni(itdata,izdata,igdata,ip3data,tir,dir,kir,bir,ubir,taa);
+  [itdata,izdata,igdata,ip3data,tir,taa]=Translation_MCMC_uni(itdata,izdata,igdata,ip3data,tir,dir,kir,bir,ubir,cdir,taa);
   
   %% Degradation MCMC
-  [itdata,izdata,igdata,ip3data,dir,daa]=Degradation_MCMC_uni(itdata,izdata,igdata,ip3data,tir,dir,kir,bir,ubir,daa);
+  [itdata,izdata,igdata,ip3data,dir,daa]=Degradation_MCMC_uni(itdata,izdata,igdata,ip3data,tir,dir,kir,bir,ubir,cdir,daa);
   
   %% Conformation MCMC
-  [itdata,izdata,igdata,ip3data,kir,kaa]=Conformation_MCMC_uni(itdata,izdata,igdata,ip3data,tir,dir,kir,bir,ubir,kaa);
+  [itdata,izdata,igdata,ip3data,kir,kaa]=Conformation_MCMC_uni(itdata,izdata,igdata,ip3data,tir,dir,kir,bir,ubir,cdir,kaa);
 
   %% Binding MCMC
-  [itdata,izdata,igdata,ip3data,bir,baa]=Binding_MCMC_loguni(itdata,izdata,igdata,ip3data,tir,dir,kir,bir,ubir,baa);
+  [itdata,izdata,igdata,ip3data,bir,baa]=Binding_MCMC_loguni(itdata,izdata,igdata,ip3data,tir,dir,kir,bir,ubir,cdir,baa);
   
   %% Unbinding MCMC
-  [itdata,izdata,igdata,ip3data,ubir,ubaa]=Unbinding_MCMC_loguni(itdata,izdata,igdata,ip3data,tir,dir,kir,bir,ubir,ubaa);
+  [itdata,izdata,igdata,ip3data,ubir,ubaa]=Unbinding_MCMC_loguni(itdata,izdata,igdata,ip3data,tir,dir,kir,bir,ubir,cdir,ubaa);
 
+  %% Complex Degradation MCMC
+  [itdata,izdata,igdata,ip3data,cdir,cdaa]=Complex_Degradation_MCMC_uni(itdata,izdata,igdata,ip3data,tir,dir,kir,bir,ubir,cdir,cdaa);
+  
   trr=[trr;tir];
   drr=[drr;dir];
   krr=[krr;kir];
   brr=[brr;bir];
   ubrr=[ubrr;ubir];
-  rr=[trr,drr,krr,brr,ubrr];
-  aa=[taa,daa,kaa,baa,ubaa];
+  cdrr=[cdrr;cdir];
+  rr=[trr,drr,krr,brr,ubrr,cdrr];
+  aa=[taa,daa,kaa,baa,ubaa,cdaa];
 
   itd=[itd,itdata];
   izd=[izd,izdata];
