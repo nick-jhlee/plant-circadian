@@ -18,19 +18,24 @@ dC=zeros(14,1);
 %C(12): ZTL1-PRR3 complex C(13): ZTL2-PRR3 complex C(14): GI-PRR3 complex
 
 % TOC1 protein
-dC(1) = tt*toc1mrnainter(t) - dt*C(1) - bb*C(1)*C(2) - bb*C(1)*C(3) - bb*C(1)*C(4) - bb*C(1)*C(5) + ubtz1*C(6) + ubtz2*C(7) + ubtg*C(8) + ubtp*C(9)+dtz1_z1*dz1* C(6)+dtz2_z2*dz2* C(7)+ dtg_g*dg *C(8)+dtp_p*dp*C(9);
+dC(1) = tt*toc1mrnainter(t) - dt*C(1) - bb*C(1)*C(2) - bb*C(1)*C(3) - bb*C(1)*C(4) - bb*C(1)*C(5) + ubtz1*C(6) + ubtz2*C(7) + ubtg*C(8) + ...
+ubtp*C(9)+dtz1_z1*dz1* C(6)+dtz2_z2*dz2* C(7)+ dtg_g*dg *C(8)+dtp_p*dp*C(9);
 
 % ZTL protein (ZTL1)
-dC(2) = tz - dz1*C(2) - kc1*light*C(2) + kc2*(1-light)*C(3)  - bb*C(1)*C(2) - bb*C(2)*C(4) - bb*C(2)*C(5) + ubtz1*C(6) + ubzg1*C(10) + ubzp1*C(12)+dtz1_t*dt* C(6)+dz1g_g*dg*C(10)+ dz1p_p * dp* C(12);
+dC(2) = tz - dz1*C(2) - kc1*light*C(2) + kc2*(1-light)*C(3)  - bb*C(1)*C(2) - bb*C(2)*C(4) - bb*C(2)*C(5) + ubtz1*C(6) + ubzg1*C(10) + ubzp1*C(12)+ ...
+    dtz1_t*dt* C(6)+dz1g_g*dg*C(10)+ dz1p_p * dp* C(12);
 
 % ZTL protein transfomred by light (ZTL2)
-dC(3) = kc1*light*C(2) - kc2*(1-light)*C(3) - dz2*C(3) - bb*C(1)*C(3) - bb*C(3)*C(4) - bb*C(3)*C(5) + ubtz2*C(7) + ubzg2*C(11) + ubzp2*C(13)+dtz2_t*dt* C(7)+dz2g_g*dg*C(11)+dz2p_p * dp * C(13);
+dC(3) = kc1*light*C(2) - kc2*(1-light)*C(3) - dz2*C(3) - bb*C(1)*C(3) - bb*C(3)*C(4) - bb*C(3)*C(5) + ubtz2*C(7) + ubzg2*C(11) + ubzp2*C(13)+ ...
+    dtz2_t*dt* C(7)+dz2g_g*dg*C(11)+dz2p_p * dp * C(13);
 
 % GI protein 
-dC(4) = tg*gimrnainter(t) - dg*C(4) - bb*C(1)*C(4) - bb*C(2)*C(4) - bb*C(3)*C(4) - bb*C(4)*C(5) + ubtg*C(8) + ubzg1*C(10) + ubzg2*C(11) + ubgp*C(14)+dtg_t*dt *C(8)+ dz1g_z1*dz1*C(10)+dz2g_z2 * dz2 *C(11)+ dgp_p * dp * C(14);
+dC(4) = tg*gimrnainter(t) - dg*C(4) - bb*C(1)*C(4) - bb*C(2)*C(4) - bb*C(3)*C(4) - bb*C(4)*C(5) + ubtg*C(8) + ubzg1*C(10) + ubzg2*C(11) + ubgp*C(14)+ ...
+    dtg_t*dt *C(8)+ dz1g_z1*dz1*C(10)+dz2g_z2 * dz2 *C(11)+ dgp_p * dp * C(14);
 
 % PRR3 protein
-dC(5) = tp*prr3mrnainter(t) - dp*C(5) - bb*C(1)*C(5) - bb*C(2)*C(5) - bb*C(3)*C(5) - bb*C(4)*C(5) + ubtp*C(9) + ubzp1*C(12) + ubzp2*C(13) + ubgp*C(14)+dtp_t*dt*C(9)+dz1p_z1 * dz1* C(12)+  dz2p_z2 * dz2 * C(13)+dgp_g * dg * C(14);
+dC(5) = tp*prr3mrnainter(t) - dp*C(5) - bb*C(1)*C(5) - bb*C(2)*C(5) - bb*C(3)*C(5) - bb*C(4)*C(5) + ubtp*C(9) + ubzp1*C(12) + ubzp2*C(13) + ubgp*C(14)+ ...
+    dtp_t*dt*C(9)+dz1p_z1 * dz1* C(12)+  dz2p_z2 * dz2 * C(13)+dgp_g * dg * C(14);
 
 % TOC1-ZTL1 complex
 dC(6) = bb*C(1)*C(2) - ubtz1*C(6) - dtz1_t*dt* C(6) - dtz1_z1*dz1* C(6);
