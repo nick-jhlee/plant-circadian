@@ -18,8 +18,8 @@ dC=zeros(14,1);
 %C(12): ZTL1-PRR3 complex C(13): ZTL2-PRR3 complex C(14): GI-PRR3 complex
 
 % TOC1 protein
-dC(1) = tt*toc1mrnainter(t) - dt*C(1) - bb*C(1)*C(2) - bb*C(1)*C(3) - bb*C(1)*C(4) - bb*C(1)*C(5) + ubtz1*C(6) + ubtz2*C(7) + ubtg*C(8) + ...
-ubtp*C(9)+dtz1_z1*dz1* C(6)+dtz2_z2*dz2* C(7)+ dtg_g*dg *C(8)+dtp_p*dp*C(9);
+dC(1) = tt*toc1mrnainter(t) - dt*C(1) - bb*C(1)*C(2) - bb*C(1)*C(3) - bb*C(1)*C(4) - bb*C(1)*C(5) + ubtz1*C(6) + ubtz2*C(7) + ubtg*C(8) +ubtp*C(9)+...
+    dtz1_z1*dz1* C(6)+dtz2_z2*dz2* C(7)+ dtg_g*dg *C(8)+dtp_p*dp*C(9);
 
 % ZTL protein (ZTL1)
 dC(2) = tz - dz1*C(2) - kc1*light*C(2) + kc2*(1-light)*C(3)  - bb*C(1)*C(2) - bb*C(2)*C(4) - bb*C(2)*C(5) + ubtz1*C(6) + ubzg1*C(10) + ubzp1*C(12)+ ...

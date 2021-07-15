@@ -85,8 +85,10 @@ for iii=1:length(kir)
     
     mtan=1/4;
     
-    prior1=(1-tanh(mtan*abs(log10(kir(1)/kir(2)))));
-    prior2=(1-tanh(mtan*abs(log10(kpr(1)/kpr(2)))));  
+    prior1 =1;
+    %(1-tanh(mtan*abs(log10(kir(1)/kir(2)))));
+    prior2 =1;
+    %(1-tanh(mtan*abs(log10(kpr(1)/kpr(2)))));  
     
     p1=1; p2=1;
     u=rand;
