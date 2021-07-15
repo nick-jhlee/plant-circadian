@@ -40,10 +40,10 @@ p3error=[0.00703093, 0.017507, 0.0281341, 0.027253, 0, 0.0132593, 0.0297481, 0.0
 % deci=dmatrix(fnum,:);
 % csvwrite(['deci', num2str(fnum),'.csv'],deci);
 
-iter=1;
+iter=5000;
 tscale=100;
 
-for repeat=1:1:100
+for repeat=1:1:1000
 
 tinit=[1 1 1 1]; dinit=[1 1 1 1 1];
 cdinit = [1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1];
@@ -158,13 +158,27 @@ for i=1:iter
 %   csvwrite(['drr', num2str(fnum), '.csv'],drr);
 %   csvwrite(['brr', num2str(fnum), '.csv'],brr);
 %   csvwrite(['ubrr', num2str(fnum), '.csv'],ubrr);
+%   
+%   csvwrite(['rr', num2str(fnum),'_',num2str(repeat),'.csv'],rr);
+%   csvwrite(['aa', num2str(fnum),'_',num2str(repeat),'.csv'],aa);
+%   csvwrite(['itd', num2str(fnum),'_',num2str(repeat),'.csv' ],itd);
+%   csvwrite(['izd', num2str(fnum),'_',num2str(repeat),'.csv' ],izd);
+%   csvwrite(['igd' , num2str(fnum),'_',num2str(repeat),'.csv'],igd);
+%   csvwrite(['ip3d' , num2str(fnum),'_',num2str(repeat),'.csv'],ip3d);
   
-  csvwrite(['rr', num2str(fnum),'_',num2str(repeat),'.csv'],rr);
-  csvwrite(['aa', num2str(fnum),'_',num2str(repeat),'.csv'],aa);
-  csvwrite(['itd', num2str(fnum),'_',num2str(repeat),'.csv' ],itd);
-  csvwrite(['izd', num2str(fnum),'_',num2str(repeat),'.csv' ],izd);
-  csvwrite(['igd' , num2str(fnum),'_',num2str(repeat),'.csv'],igd);
-  csvwrite(['ip3d' , num2str(fnum),'_',num2str(repeat),'.csv'],ip3d);
+%   csvwrite(['rr_',num2str(repeat),'.csv'],rr);
+%   csvwrite(['aa_',num2str(repeat),'.csv'],aa);
+%   csvwrite(['itd_',num2str(repeat),'.csv' ],itd);
+%   csvwrite(['izd_',num2str(repeat),'.csv' ],izd);
+%   csvwrite(['igd_',num2str(repeat),'.csv'],igd);
+%   csvwrite(['ip3d_',num2str(repeat),'.csv'],ip3d);
+  
+  writematrix(rr,['rr_',num2str(repeat),'.csv']);
+  writematrix(aa,['aa_',num2str(repeat),'.csv']);
+  writematrix(itd,['itd_',num2str(repeat),'.csv']);
+  writematrix(izd,['izd_',num2str(repeat),'.csv']);
+  writematrix(igd,['igd_',num2str(repeat),'.csv']);
+  writematrix(ip3d,['ip3d_',num2str(repeat),'.csv']);
   
   if mod(iternum,1) == 0
       iternum
